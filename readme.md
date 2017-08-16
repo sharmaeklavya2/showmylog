@@ -16,27 +16,18 @@ This has these advantages:
   This has helped me become more productive.
 
 * I have a record of my past activities. If I can't recall what I did a few days ago,
-  or I can't recall when did I last do something, my log helps me find out.
+  or I can't recall when I last did something, my log helps me find out.
 
-### Logging format
+### Log file format
 
-Initially I used notebooks made of paper to do this.
-But I did it in a somewhat tabular form, which was cumbersome on paper.
-
-So I started doing it in text files instead.
+Initially I used notebooks made of paper to do this, but I soon switched to text files.
 This was better since edits were less messy and I could `grep` those files.
-But I needed something more.
 
 I needed a machine-readable format so that I could do automated or semi-automated analysis on it.
 But I also needed a format which is not tied to a particular program, so these files must be human-readable
 and editable with a simple text editor.
 
-Some people have suggested that there should be a script to which I can send start and stop commands
-and it will automatically add entries to log files.
-This is a good idea but I haven't implemented it yet and I don't think that is worth the effort.
-For now, I manually add entries to log files using a text editor.
-
-### Logging format details
+### Log file format details
 
 A file is made up of records.
 Each record should span just one line.
@@ -65,11 +56,10 @@ None of these parts should have spaces, except `description`.
 * `description` can be anything. It can also be empty.
 
 I use the `mylog` file extension for these files.
-I have set `syntax=diff` for `mylog` files in vim, so that lines are colored appropriately.
 
 You can see [`example.mylog`](example.mylog) for an example of a log file.
 
-### Limitations imposed on format by `showmylog.py`
+### Additional constraints imposed on format by `showmylog.py`
 
 * No two activities should overlap.
 * All activities should be in chronological order.
@@ -83,9 +73,27 @@ You can see [`example.mylog`](example.mylog) for an example of a log file.
 
 Run `./showmylog.py --help` for more info.
 
+Currently `showmylog.py` has no way of handling uncertainty.
+It replaces all `?` by `0` in times.
+
 ### Code
 
 This code is written for python 3.5 and above.
 It contains [PEP 484 type annotations](https://www.python.org/dev/peps/pep-0484/),
 which makes it possible to use [mypy](http://mypy-lang.org/) for static type-checking.
 `showmylog.py` passes the `--strict-optional` mypy test.
+
+### Usage tips
+
+Add this line to your `~/.vimrc` to enable syntax highlighting for mylog files:
+
+    au BufRead,BufNewFile *.mylog set filetype=diff
+
+I store my files in `~/mylog/`. Each file has a name of the form `YYYY-MM-DD.mylog`.
+
+These are some handy bash aliases:
+
+    alias today='date "+%F"'
+    alias yesterday='date -d "yesterday" "+%F"'
+    alias logit='vim ~/mylog/$(today).mylog'
+    alias logyes='vim ~/mylog/$(yesterday).mylog'
