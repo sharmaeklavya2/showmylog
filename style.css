@@ -1,0 +1,65 @@
+.timeline
+{
+    width: 800px;
+    background-color: white;
+    border: 1px solid black;
+    display: flex;
+}
+
+.timeline-big
+{width: 800px;}
+.timeline-small
+{width: 300px;}
+
+.activity
+{
+    /*outline: 1px solid black;*/
+    position: relative;
+    display: inline-block;
+}
+.activity-big
+{height: 30px;}
+.activity-small
+{height: 10px;}
+
+.activity .tooltiptext
+{
+    visibility: hidden;
+    background-color: black;
+    color: white;
+    border-radius: 6px;
+    padding: 5px 10px;
+    white-space: nowrap;
+
+    position: absolute;
+    z-index: 100;
+}
+
+.activity-small .tooltiptext
+{top: 45px;}
+.activity-big .tooltiptext
+{top: 35px;}
+
+.activity:hover .tooltiptext
+{visibility: visible; opacity: 1;}
+
+.activity-good
+{background-color: rgba(92, 184, 92, 1);}
+.activity-sleep
+{background-color: rgba(128, 128, 0, 1);}
+.activity-bad
+{background-color: rgba(217, 83, 79, 1);}
+.activity-warn
+{background-color: rgba(240, 173, 78, 1);}
+.activity-ok
+{background-color: rgba(211, 211, 211, 1);}
+.activity-good:hover
+{background-color: rgba(92, 184, 92, 0.7);}
+.activity-sleep:hover
+{background-color: rgba(128, 128, 0, 0.7);}
+.activity-bad:hover
+{background-color: rgba(217, 83, 79, 0.7);}
+.activity-warn:hover
+{background-color: rgba(240, 173, 78, 0.7);}
+.activity-ok:hover
+{background-color: rgba(211, 211, 211, 0.7);}

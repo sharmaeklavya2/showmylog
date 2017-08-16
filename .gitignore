@@ -1,0 +1,15 @@
+# cache/gen
+*.pyc
+__pycache__/
+.mypy_cache/
+/readme.html
+/output/
+/output.txt
+/report.html
+
+# Trash
+*~
+*.sw[po]
+*.db
+Desktop.ini
+.DS_Store

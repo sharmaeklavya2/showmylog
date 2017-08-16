@@ -1,0 +1,11 @@
++ 13:00 14:30 -:-- 1:30 study machine_learning  # self-study at room
++ 14:30 15:50 -:-- 1:20 study linear_algebra
+: 15:50 16:00 -:-- 0:10 goto lecture_hall
++ 16:00 16:50 -:-- 0:50 attend_lecture machine_learning  # attend lecture at university
++ 16:50 17:00 -:-- 0:10 goto room
+- 17:00 17:20 -:-- 0:20 talk_to friends
+: 17:25 17:40 -:-- 0:15 eat snacks
++ 17:45 19:45 -:-- 2:00 programming_contest codeforces (virtual)
+: 19:45 20:15 -:-- 0:30 eat dinner
++ 20:15 23:00 -:-- 2:45 study algorithms
+s 23:00 23:59 -:-- 0:59 sleep
