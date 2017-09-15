@@ -325,13 +325,14 @@ def main():
         reported_time = sum((r.duration for r in records), timedelta())
         unreported_time = total_time - reported_time
 
-        print(fpath)
-        print()
         type_agg = get_total_times(records, 'work_type')
         add_to_dict(type_aggs, type_agg)
         label_agg = get_total_times(records, 'label')
         add_to_dict(label_aggs, label_agg)
-        print_by_type_and_label(type_agg, label_agg, args.sort, args.short, 1, total_time)
+        if not args.short or len(fpath) == 1:
+            print(fpath)
+            print()
+            print_by_type_and_label(type_agg, label_agg, args.sort, args.short, 1, total_time)
 
         day_reports.append(make_day_report(fpath, records, type_agg, min_time, max_time))
 
