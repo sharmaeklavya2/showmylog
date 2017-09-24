@@ -7,7 +7,7 @@ from os.path import join as pjoin
 from os.path import realpath, dirname
 from datetime import date, time, timedelta, datetime
 import typing
-from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, List, Mapping, MutableSequence, Optional, Sequence, Tuple, Union
 from collections import OrderedDict
 
 HOMEDIR = os.path.expanduser('~')
@@ -100,10 +100,23 @@ def parse_file(fname):
                     tb = record.start_time
                     if ta < tb:
                         records.append(Record((ta, tb)))
-                if record.end_time != record.start_time:
-                    records.append(record)
+                records.append(record)
                 prev_record = record
     return records
+
+
+def use_now_in_records(records):
+    # type: (MutableSequence[Record]) -> None
+    last_record = records[-1]
+    last_time = last_record.end_time
+    now = datetime.now().time()
+    if now < last_time:
+        return
+    if last_record.work_type == 'u' or (last_time == last_record.start_time):
+        last_record.end_time = now
+        last_record.duration = t2dt(now) - t2dt(last_record.start_time)
+    else:
+        records.append(Record((last_time, now)))
 
 
 def get_total_times(records, aggregate_by):
@@ -296,6 +309,8 @@ def main():
             just print the aggregated summary instead of also printing output for each day separately.""")
     parser.add_argument('--sort', default=False, action='store_true',
         help='reverse sort output on stdout based on duration')
+    parser.add_argument('--use-now', default=False, action='store_true',
+        help='Use current time as end time of last activity whose end time is not specified')
     args = parser.parse_args()  # type: Any
 
     if args.report_path is None:
@@ -318,6 +333,9 @@ def main():
     total_total_time = timedelta(0)
     for fpath in fpaths:
         records = parse_file(fpath)
+        if args.use_now:
+            use_now_in_records(records)
+        records = [record for record in records if record.start_time != record.end_time]
         min_time = records[0].start_time
         max_time = records[-1].end_time
         total_time = t2dt(max_time) - t2dt(min_time)
