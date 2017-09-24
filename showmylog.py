@@ -158,6 +158,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+{refresh}
     <title> mylog </title>
     <style>
 {style}
@@ -172,6 +173,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 </html>
 """
 
+REFRESH_TEMPLATE = '    <meta http-equiv="refresh" content="{seconds}">'
 
 COLOR_CODES = {
     '': '\033[0m',
@@ -311,6 +313,8 @@ def main():
         help='reverse sort output on stdout based on duration')
     parser.add_argument('--use-now', default=False, action='store_true',
         help='Use current time as end time of last activity whose end time is not specified')
+    parser.add_argument('--refresh-time', default=None, type=int,
+        help='HTML page refresh rate in seconds; no refresh if not specified')
     args = parser.parse_args()  # type: Any
 
     if args.report_path is None:
@@ -359,7 +363,8 @@ def main():
         print_by_type_and_label(type_aggs, label_aggs, args.sort, args.short, len(fpaths),
             total_total_time, timedelta(minutes=5) * len(fpaths))
 
-    report = HTML_TEMPLATE.format(style=STYLE, days=''.join(day_reports))
+    refresh_tag = '' if args.refresh_time is None else REFRESH_TEMPLATE.format(seconds=args.refresh_time)
+    report = HTML_TEMPLATE.format(style=STYLE, days=''.join(day_reports), refresh=refresh_tag)
     with open(args.report_path, 'w') as fobj:
         fobj.write(report)
     return 0
