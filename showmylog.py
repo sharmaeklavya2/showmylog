@@ -271,7 +271,7 @@ def add_to_dict(dest, source):
             dest[k] = v
 
 
-def print_by_type_and_label(type_agg, label_agg, sort, short, days, total_time, time_limit=timedelta(0)):
+def print_by_type_and_label(type_agg, label_agg, sort, long, days, total_time, time_limit=timedelta(0)):
     # type: (SP2TDDict, SP2TDDict, bool, bool, int, timedelta, timedelta) -> None
     print('By type:')
     print()
@@ -306,9 +306,8 @@ def main():
             A number k will be interpreted as a date k days before today.""")
     parser.add_argument('-r', '--report-path',
         help='report output path. Default is ~/mylog/report.html')
-    parser.add_argument('-s', '--short', default=False, action='store_true',
-        help="""print short output to stdout, i.e. when multiple days are passed as arguments,
-            just print the aggregated summary instead of also printing output for each day separately.""")
+    parser.add_argument('-l', '--long', default=False, action='store_true',
+        help="""print long output to stdout when multiple days are passed as arguments""")
     parser.add_argument('--sort', default=False, action='store_true',
         help='reverse sort output on stdout based on duration')
     parser.add_argument('--use-now', default=False, action='store_true',
@@ -351,16 +350,16 @@ def main():
         add_to_dict(type_aggs, type_agg)
         label_agg = get_total_times(records, 'label')
         add_to_dict(label_aggs, label_agg)
-        if not args.short or len(fpaths) == 1:
+        if args.long or len(fpaths) == 1:
             print(fpath)
             print()
-            print_by_type_and_label(type_agg, label_agg, args.sort, args.short, 1, total_time)
+            print_by_type_and_label(type_agg, label_agg, args.sort, args.long, 1, total_time)
 
         day_reports.append(make_day_report(fpath, records, type_agg, min_time, max_time))
 
     if len(fpaths) > 1:
         print('Summary:\n')
-        print_by_type_and_label(type_aggs, label_aggs, args.sort, args.short, len(fpaths),
+        print_by_type_and_label(type_aggs, label_aggs, args.sort, args.long, len(fpaths),
             total_total_time, timedelta(minutes=5) * len(fpaths))
 
     refresh_tag = '' if args.refresh_time is None else REFRESH_TEMPLATE.format(seconds=args.refresh_time)
