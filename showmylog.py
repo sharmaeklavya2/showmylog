@@ -351,7 +351,7 @@ def main():
         add_to_dict(type_aggs, type_agg)
         label_agg = get_total_times(records, 'label')
         add_to_dict(label_aggs, label_agg)
-        if not args.short or len(fpath) == 1:
+        if not args.short or len(fpaths) == 1:
             print(fpath)
             print()
             print_by_type_and_label(type_agg, label_agg, args.sort, args.short, 1, total_time)
