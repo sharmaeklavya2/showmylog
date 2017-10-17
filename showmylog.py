@@ -318,7 +318,11 @@ def main():
         help='Use current time as end time of last activity whose end time is not specified')
     parser.add_argument('--refresh-time', default=None, type=int,
         help='HTML page refresh rate in seconds; no refresh if not specified')
+    parser.add_argument('--ignore-missing', action='store_true', default=False,
+        help="don't raise errors for missing or empty files")
     args = parser.parse_args()  # type: Any
+
+    global err_count
 
     if args.report_path is None:
         args.report_path = DEFAULT_REPORT_PATH
@@ -339,9 +343,21 @@ def main():
     day_reports = []  # type: List[str]
     total_total_time = timedelta(0)
     for fpath in fpaths:
-        records = parse_file(fpath)
+        try:
+            records = parse_file(fpath)
+        except FileNotFoundError:
+            if not args.ignore_missing:
+                color_print("'{}' is '{}'".format(fpath, 'missing'), file=sys.stderr, color='red')
+                err_count += 1
+            continue
         if args.use_now:
             use_now_in_records(records)
+        if not records:
+            if not args.ignore_missing:
+                color_print("'{}' is '{}'".format(fpath, 'empty'), file=sys.stderr, color='red')
+                err_count += 1
+            continue
+
         records = [record for record in records if record.start_time != record.end_time]
         min_time = records[0].start_time
         max_time = records[-1].end_time
