@@ -23,6 +23,8 @@ CURDIR = dirname(realpath(__file__))
 
 SP2TDDict = Dict[Tuple[str, str], timedelta]  # string-pair to timedelta dict
 
+err_count = 0
+
 def t2dt(t: time) -> datetime:
     """ Convert a time object into a datetime object with some fixed date """
     return datetime.combine(date.min, t)
@@ -69,7 +71,9 @@ class Record:
             if len(rest) >= 1:
                 self.sublabel = rest[0]
             if t2dt(self.end_time) - t2dt(self.start_time) != self.duration:
-                color_print("'{}' has incorrect duration".format(' '.join(words)), color='red')
+                color_print("'{}' has incorrect duration".format(' '.join(words)), file=sys.stderr, color='red')
+                global err_count
+                err_count += 1
 
     def __str__(self) -> str:
         return Record.format_str.format(repr(self.work_type), self.start_time, self.end_time, self.penalty,
@@ -366,7 +370,7 @@ def main():
     report = HTML_TEMPLATE.format(style=STYLE, days=''.join(day_reports), refresh=refresh_tag)
     with open(args.report_path, 'w') as fobj:
         fobj.write(report)
-    return 0
+    return 1 if err_count > 0 else 0
 
 if __name__ == '__main__':
     sys.exit(main())
