@@ -350,13 +350,13 @@ def main():
                 color_print("'{}' is '{}'".format(fpath, 'missing'), file=sys.stderr, color='red')
                 err_count += 1
             continue
-        if args.use_now:
-            use_now_in_records(records)
         if not records:
             if not args.ignore_missing:
                 color_print("'{}' is '{}'".format(fpath, 'empty'), file=sys.stderr, color='red')
                 err_count += 1
             continue
+        if args.use_now:
+            use_now_in_records(records)
 
         records = [record for record in records if record.start_time != record.end_time]
         min_time = records[0].start_time
