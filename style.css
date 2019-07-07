@@ -53,6 +53,8 @@
 {background-color: rgba(240, 173, 78, 1);}
 .activity-ok
 {background-color: rgba(211, 211, 211, 1);}
+.activity-job
+{background-color: rgba(120, 120, 120, 1);}
 .activity-good:hover
 {background-color: rgba(92, 184, 92, 0.7);}
 .activity-sleep:hover
@@ -63,3 +65,5 @@
 {background-color: rgba(240, 173, 78, 0.7);}
 .activity-ok:hover
 {background-color: rgba(211, 211, 211, 0.7);}
+.activity-job:hover
+{background-color: rgba(120, 120, 120, 0.7);}

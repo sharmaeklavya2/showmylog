@@ -190,8 +190,27 @@ COLOR_CODES = {
     'white': '\033[0;37m',
 }
 
-TYPE_NAME = {'+': 'good', 's': 'sleep', '-': 'bad', '!': 'warn', ':': 'ok', 'u': 'uncounted', '': 'default'}
-TYPE_COLOR = {'+': 'green', '-': 'red', '!': 'yellow', ':': '', 'u': '', '': '', 's': ''}
+TYPE_NAME = {
+    '+': 'good',
+    's': 'sleep',
+    '-': 'bad',
+    '!': 'warn',
+    ':': 'ok',
+    'u': 'uncounted',
+    'j': 'job',
+    '': 'default',
+}
+
+TYPE_COLOR = {
+    '+': 'green',
+    '-': 'red',
+    '!': 'yellow',
+    ':': '',
+    'u': '',
+    '': '',
+    'j': '',
+    's': '',
+}
 
 
 DAY_TEMPLATE = """
