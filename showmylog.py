@@ -341,6 +341,9 @@ def main():
         help="don't raise errors for missing or empty files")
     args = parser.parse_args()  # type: Any
 
+    if args.use_now:
+        print('current time:', datetime.now())
+
     global err_count
 
     if args.report_path is None:
