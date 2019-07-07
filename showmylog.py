@@ -25,6 +25,7 @@ SP2TDDict = Dict[Tuple[str, str], timedelta]  # string-pair to timedelta dict
 
 err_count = 0
 
+
 def t2dt(t: time) -> datetime:
     """ Convert a time object into a datetime object with some fixed date """
     return datetime.combine(date.min, t)
@@ -78,6 +79,7 @@ class Record:
     def __str__(self) -> str:
         return Record.format_str.format(repr(self.work_type), self.start_time, self.end_time, self.penalty,
             self.duration, repr(self.label), repr(self.sublabel))
+
     def __repr__(self) -> str:
         return str(self)
 
@@ -150,7 +152,7 @@ def table2strs(table, pad=' ', spad='', sep=' '):
             if j + 1 > len(lengths):
                 lengths += [0] * (j + 1 - len(lengths))
             lengths[j] = max(lengths[j], len(x) + len(spad))
-    return [(color, sep.join([(x+spad).ljust(lengths[j], pad) for j, x in enumerate(row)])) for (color, row) in table]
+    return [(color, sep.join([(x + spad).ljust(lengths[j], pad) for j, x in enumerate(row)])) for (color, row) in table]
 
 
 with open(pjoin(CURDIR, 'style.css')) as fobj:
@@ -385,8 +387,7 @@ def main():
         max_time = records[-1].end_time
         total_time = t2dt(max_time) - t2dt(min_time)
         total_total_time += total_time
-        reported_time = sum((r.duration for r in records), timedelta())
-        unreported_time = total_time - reported_time
+        # reported_time = sum((r.duration for r in records), timedelta())
 
         type_agg = get_total_times(records, 'work_type')
         add_to_dict(type_aggs, type_agg)
@@ -409,6 +410,7 @@ def main():
     with open(args.report_path, 'w') as fobj:
         fobj.write(report)
     return 1 if err_count > 0 else 0
+
 
 if __name__ == '__main__':
     sys.exit(main())
