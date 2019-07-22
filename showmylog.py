@@ -389,15 +389,17 @@ def main():
                 color_print("'{}' is '{}'".format(fpath, 'missing'), file=sys.stderr, color='red')
                 err_count += 1
             continue
+
+        if args.use_now and records:
+            use_now_in_records(records, args.stale_limit)
+
+        records = [record for record in records if record.start_time != record.end_time]
         if not records:
             if not args.ignore_missing:
                 color_print("'{}' is '{}'".format(fpath, 'empty'), file=sys.stderr, color='red')
                 err_count += 1
             continue
-        if args.use_now:
-            use_now_in_records(records, args.stale_limit)
 
-        records = [record for record in records if record.start_time != record.end_time]
         min_time = records[0].start_time
         max_time = records[-1].end_time
         total_time = t2dt(max_time) - t2dt(min_time)
