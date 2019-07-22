@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+"""Show useful information about one or more *.mylog files."""
+
 import argparse
 import sys
 import os
@@ -52,18 +54,21 @@ class Record:
     label = ''
     sublabel = ''
 
-    format_str = 'Record(work_type={}, start_time={}, end_time={}, penalty={}, duration={}, label={}, sublabel={})'
+    format_str = ('Record(work_type={}, start_time={}, end_time={}'
+        ', penalty={}, duration={}, label={}, sublabel={})')
 
     def __init__(self, words):
         # type: (Sequence[Union[str, time]]) -> None
         self.words = words
+        self.str_words = [str(x) for x in words]
         if len(words) == 2:
             self.start_time, self.end_time = typing.cast(Tuple[time, time], words)
             self.work_type = 'u'
             self.duration = t2dt(self.end_time) - t2dt(self.start_time)
         elif words:
             words = typing.cast(Sequence[str], words)
-            self.work_type, start_time_str, end_time_str, penalty_str, duration_str, self.label, *rest = words
+            self.work_type, start_time_str, end_time_str, penalty_str, duration_str,\
+                self.label, *rest = words
             self.start_time = parse_time(start_time_str)
             self.end_time = parse_time(end_time_str)
             if self.end_time == time(0):
@@ -73,13 +78,14 @@ class Record:
             if len(rest) >= 1:
                 self.sublabel = rest[0]
             if t2dt(self.end_time) - t2dt(self.start_time) != self.duration:
-                color_print("'{}' has incorrect duration".format(' '.join(words)), file=sys.stderr, color='red')
+                color_print("'{}' has incorrect duration".format(' '.join(words)),
+                    file=sys.stderr, color='red')
                 global err_count
                 err_count += 1
 
     def __str__(self) -> str:
-        return Record.format_str.format(repr(self.work_type), self.start_time, self.end_time, self.penalty,
-            self.duration, repr(self.label), repr(self.sublabel))
+        return Record.format_str.format(repr(self.work_type), self.start_time, self.end_time,
+            self.penalty, self.duration, repr(self.label), repr(self.sublabel))
 
     def __repr__(self) -> str:
         return str(self)
@@ -113,7 +119,7 @@ def parse_file(fname):
 
 
 def use_now_in_records(records, stale_limit):
-    # type: (MutableSequence[Record]) -> None
+    # type: (MutableSequence[Record], float) -> None
     last_record = records[-1]
     last_time = last_record.end_time
     now_ts = datetime.now()
@@ -128,7 +134,7 @@ def use_now_in_records(records, stale_limit):
     else:
         records.append(Record((last_time, now)))
     if stale_limit is not None and diff > timedelta(minutes=stale_limit):
-        color_print("stale-limit reached for '{}'".format(' '.join(last_record.words)),
+        color_print("stale-limit reached for '{}'".format(' '.join(last_record.str_words)),
             file=sys.stderr, color='red')
         global err_count
         err_count += 1
@@ -161,7 +167,8 @@ def table2strs(table, pad=' ', spad='', sep=' '):
             if j + 1 > len(lengths):
                 lengths += [0] * (j + 1 - len(lengths))
             lengths[j] = max(lengths[j], len(x) + len(spad))
-    return [(color, sep.join([(x + spad).ljust(lengths[j], pad) for j, x in enumerate(row)])) for (color, row) in table]
+    return [(color, sep.join([(x + spad).ljust(lengths[j], pad)
+        for j, x in enumerate(row)])) for (color, row) in table]
 
 
 with open(pjoin(CURDIR, 'style.css')) as fobj:
@@ -193,8 +200,8 @@ REFRESH_TEMPLATE = '    <meta http-equiv="refresh" content="{seconds}">'
 COLOR_CODES = {
     '': '\033[0m',
     'red': '\033[0;31m',
-    'green':'\033[0;32m',
-    'yellow':'\033[0;33m',
+    'green': '\033[0;32m',
+    'yellow': '\033[0;33m',
     'blue': '\033[0;34m',
     'magenta': '\033[0;35m',
     'cyan': '\033[0;36m',
@@ -238,7 +245,7 @@ DAY_TEMPLATE = """
 
 LINE_TEMPLATE = """
     <div class="activity activity-{type} activity-big" style="flex: {ratio:.5f}">
-    <span class="tooltiptext">{label}{begin} to {end} = {duration} ({percent:.1f} %)</span></div>"""
+    <span class="tooltiptext">{label}{begin} to {end} = {duration} ({percent:.1f} %)</span></div>"""  # noqa
 
 AGG_LINE_TEMPLATE = """
     <div class="activity activity-{type} activity-small" style="flex: {ratio:.5f}">
@@ -255,14 +262,14 @@ def make_day_report(fpath, records, type_agg, start_time, end_time):
         if label:
             label += ':<br />'
         line = LINE_TEMPLATE.format(begin=r.start_time.strftime('%H:%M'),
-            end=r.end_time.strftime('%H:%M'), duration=r.duration, type=TYPE_NAME.get(r.work_type, ''),
-            ratio=ratio, percent=100*ratio, label=label)
+            end=r.end_time.strftime('%H:%M'), duration=r.duration,
+            type=TYPE_NAME.get(r.work_type, ''), ratio=ratio, percent=100 * ratio, label=label)
         lines.append(line)
     agg_lines = []
     for (color, k), v in type_agg.items():
         ratio = v / total_time
         agg_lines.append(AGG_LINE_TEMPLATE.format(type=TYPE_NAME.get(k, ''), duration=v,
-            ratio=ratio, percent=100*ratio))
+            ratio=ratio, percent=100 * ratio))
     return DAY_TEMPLATE.format(fpath=fpath, total_time=total_time,
         start_time=start_time.strftime('%H:%M'), end_time=end_time.strftime('%H:%M'),
         lines=''.join(lines), agg_lines=''.join(agg_lines))
@@ -305,7 +312,7 @@ def add_to_dict(dest, source):
             dest[k] = v
 
 
-def print_by_type_and_label(type_agg, label_agg, sort, long, days, total_time, time_limit=timedelta(0)):
+def print_by_type_and_label(type_agg, label_agg, sort, long, days, total_time, time_limit=timedelta(0)):  # noqa
     # type: (SP2TDDict, SP2TDDict, bool, bool, int, timedelta, timedelta) -> None
     print('By type:')
     print()
@@ -333,7 +340,7 @@ def print_by_type_and_label(type_agg, label_agg, sort, long, days, total_time, t
 def main():
     # type: () -> int
 
-    parser = argparse.ArgumentParser(description='Show useful information about one or more *.mylog files')
+    parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('paths', nargs='*', default=['today'],
         help="""*.mylog files to show info about. Default is 'today'.
             Each argument should either be 'today', 'yesterday', a number or path to a file.
@@ -413,7 +420,7 @@ def main():
         print_by_type_and_label(type_aggs, label_aggs, args.sort, args.long, len(fpaths),
             total_total_time, timedelta(minutes=5) * len(fpaths))
 
-    refresh_tag = '' if args.refresh_time is None else REFRESH_TEMPLATE.format(seconds=args.refresh_time)
+    refresh_tag = '' if args.refresh_time is None else REFRESH_TEMPLATE.format(seconds=args.refresh_time)  # noqa
     report = HTML_TEMPLATE.format(style=STYLE, days=''.join(day_reports), refresh=refresh_tag)
     with open(args.report_path, 'w') as fobj:
         fobj.write(report)
