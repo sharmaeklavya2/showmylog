@@ -118,6 +118,9 @@ def parse_file(fname):
     return records
 
 
+STALE_EXEMPT_TYPES = ['s', 'j']
+
+
 def use_now_in_records(records, stale_limit):
     # type: (MutableSequence[Record], float) -> None
     last_record = records[-1]
@@ -133,7 +136,8 @@ def use_now_in_records(records, stale_limit):
         last_record.duration = diff
     else:
         records.append(Record((last_time, now)))
-    if stale_limit is not None and diff > timedelta(minutes=stale_limit):
+    if (stale_limit is not None and last_record.work_type not in STALE_EXEMPT_TYPES and
+            diff > timedelta(minutes=stale_limit)):
         color_print("stale-limit reached for '{}'".format(' '.join(last_record.str_words)),
             file=sys.stderr, color='red')
         global err_count
