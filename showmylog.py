@@ -56,6 +56,7 @@ class Record:
 
     def __init__(self, words):
         # type: (Sequence[Union[str, time]]) -> None
+        self.words = words
         if len(words) == 2:
             self.start_time, self.end_time = typing.cast(Tuple[time, time], words)
             self.work_type = 'u'
@@ -111,18 +112,26 @@ def parse_file(fname):
     return records
 
 
-def use_now_in_records(records):
+def use_now_in_records(records, stale_limit):
     # type: (MutableSequence[Record]) -> None
     last_record = records[-1]
     last_time = last_record.end_time
-    now = datetime.now().time()
+    now_ts = datetime.now()
+    print('current time:', now_ts)
+    now = now_ts.time()
+    diff = t2dt(now) - t2dt(last_record.start_time)
     if now < last_time:
         return
     if last_record.work_type == 'u' or (last_time == last_record.start_time):
         last_record.end_time = now
-        last_record.duration = t2dt(now) - t2dt(last_record.start_time)
+        last_record.duration = diff
     else:
         records.append(Record((last_time, now)))
+    if stale_limit is not None and diff > timedelta(minutes=stale_limit):
+        color_print("stale-limit reached for '{}'".format(' '.join(last_record.words)),
+            file=sys.stderr, color='red')
+        global err_count
+        err_count += 1
 
 
 def get_total_times(records, aggregate_by):
@@ -337,14 +346,13 @@ def main():
         help='reverse sort output on stdout based on duration')
     parser.add_argument('--use-now', default=False, action='store_true',
         help='Use current time as end time of last activity whose end time is not specified')
+    parser.add_argument('--stale-limit', type=float,
+        help='Raise error if log is staler than --stale-limit minutes')
     parser.add_argument('--refresh-time', default=None, type=int,
         help='HTML page refresh rate in seconds; no refresh if not specified')
     parser.add_argument('--ignore-missing', action='store_true', default=False,
         help="don't raise errors for missing or empty files")
     args = parser.parse_args()  # type: Any
-
-    if args.use_now:
-        print('current time:', datetime.now())
 
     global err_count
 
@@ -380,7 +388,7 @@ def main():
                 err_count += 1
             continue
         if args.use_now:
-            use_now_in_records(records)
+            use_now_in_records(records, args.stale_limit)
 
         records = [record for record in records if record.start_time != record.end_time]
         min_time = records[0].start_time
