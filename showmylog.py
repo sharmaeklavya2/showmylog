@@ -302,7 +302,7 @@ def color_print(*args, color='', file=sys.stdout, **kwargs):
             print(COLOR_CODES[color], file=file, end='', **kwargs)
             print(*args, file=file, **kwargs)
         finally:
-            print(COLOR_CODES[''], file=file, end='', **kwargs)
+            print(COLOR_CODES[''], file=file, end='', **kwargs, flush=True)
     else:
         print(*args, file=file, **kwargs)
 
