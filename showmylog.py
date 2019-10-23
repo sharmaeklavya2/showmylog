@@ -119,6 +119,7 @@ def parse_file(fname):
 
 
 STALE_EXEMPT_TYPES = ['s', 'j']
+PRINTED_NOW = False
 
 
 def use_now_in_records(records, stale_limit):
@@ -126,7 +127,10 @@ def use_now_in_records(records, stale_limit):
     last_record = records[-1]
     last_time = last_record.end_time
     now_ts = datetime.now()
-    print('current time:', now_ts)
+    global PRINTED_NOW
+    if not PRINTED_NOW:
+        print('current time:', now_ts)
+        PRINTED_NOW = True
     now = now_ts.time()
     diff = t2dt(now) - t2dt(last_record.start_time)
     if now < last_time:
