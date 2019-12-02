@@ -150,10 +150,12 @@ def use_now_in_records(records, stale_limit):
 
 
 def get_total_times(records, aggregate_by):
-    # type: (Sequence[Record], str) -> SP2TDDict
+    # type: (Sequence[Record], Optional[str]) -> SP2TDDict
     d = OrderedDict()  # type: SP2TDDict
     for record in records:
-        if aggregate_by == 'work_type':
+        if aggregate_by is None:
+            key = 'total'
+        elif aggregate_by == 'work_type':
             key = record.work_type
         elif aggregate_by == 'label':
             key = record.label
@@ -161,7 +163,10 @@ def get_total_times(records, aggregate_by):
             key = '{}.{}'.format(record.label, record.sublabel)
         else:
             raise Exception('aggregator {} not allowed'.format(repr(aggregate_by)))
-        color = TYPE_COLOR.get(record.work_type, '')
+        if aggregate_by is None:
+            color = ''
+        else:
+            color = TYPE_COLOR.get(record.work_type, '')
         if (color, key) not in d:
             d[(color, key)] = timedelta(0)
         d[(color, key)] += record.duration
@@ -321,11 +326,18 @@ def add_to_dict(dest, source):
             dest[k] = v
 
 
-def print_by_type_and_label(type_agg, label_agg, sort, long, days, total_time, time_limit=timedelta(0)):  # noqa
-    # type: (SP2TDDict, SP2TDDict, bool, bool, int, timedelta, timedelta) -> None
+def print_by_type_and_label(all_agg, type_agg, label_agg, sort, long, days,
+        total_time, time_limit=timedelta(0)):  # noqa
+    # type: (SP2TDDict, SP2TDDict, SP2TDDict, bool, bool, int, timedelta, timedelta) -> None
+
+    items = all_agg.items()  # type: typing.Collection[Tuple[Tuple[str, str], timedelta]]
+    for (color, k), v in items:
+        print('total:', pretty_str_timedelta(v, total_time, days))
+    print()
+
     print('By type:')
     print()
-    items = type_agg.items()  # type: typing.Collection[Tuple[Tuple[str, str], timedelta]]
+    items = type_agg.items()
     if sort:
         items = sorted(items, reverse=True, key=(lambda x: x[1]))
     for (color, k), v in items:
@@ -386,6 +398,7 @@ def main():
         else:
             fpaths.append(x)
 
+    all_aggs = {}  # type: SP2TDDict
     type_aggs = {}  # type: SP2TDDict
     label_aggs = {}  # type: SP2TDDict
     day_reports = []  # type: List[str]
@@ -415,6 +428,8 @@ def main():
         total_total_time += total_time
         # reported_time = sum((r.duration for r in records), timedelta())
 
+        all_agg = get_total_times(records, None)
+        add_to_dict(all_aggs, all_agg)
         type_agg = get_total_times(records, 'work_type')
         add_to_dict(type_aggs, type_agg)
         label_agg = get_total_times(records, 'label')
@@ -422,13 +437,14 @@ def main():
         if args.long or len(fpaths) == 1:
             print(fpath)
             print()
-            print_by_type_and_label(type_agg, label_agg, args.sort, args.long, 1, total_time)
+            print_by_type_and_label(all_agg, type_agg, label_agg, args.sort, args.long,
+                1, total_time)
 
         day_reports.append(make_day_report(fpath, records, type_agg, min_time, max_time))
 
     if len(fpaths) > 1:
         print('Summary:\n')
-        print_by_type_and_label(type_aggs, label_aggs, args.sort, args.long, len(fpaths),
+        print_by_type_and_label(all_aggs, type_aggs, label_aggs, args.sort, args.long, len(fpaths),
             total_total_time, timedelta(minutes=5) * len(fpaths))
 
     refresh_tag = '' if args.refresh_time is None else REFRESH_TEMPLATE.format(seconds=args.refresh_time)  # noqa
