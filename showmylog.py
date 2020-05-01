@@ -141,7 +141,7 @@ def use_now_in_records(records, stale_limit):
     else:
         records.append(Record((last_time, now)))
         diff = t2dt(now) - t2dt(last_time)
-    if (stale_limit is not None and last_record.work_type not in STALE_EXEMPT_TYPES and
+    if (stale_limit is not None and last_record.work_type not in STALE_EXEMPT_TYPES and  # noqa
             diff > timedelta(minutes=stale_limit)):
         color_print("stale-limit reached for '{}'".format(' '.join(last_record.str_words)),
             file=sys.stderr, color='red')
