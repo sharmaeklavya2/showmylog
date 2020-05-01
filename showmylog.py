@@ -12,6 +12,8 @@ import typing
 from typing import Any, Dict, List, Mapping, MutableSequence, Optional, Sequence, Tuple, TypeVar
 from collections import OrderedDict
 
+from jinja2 import Template
+
 TODAY = date.today()
 YESTERDAY = TODAY - timedelta(days=1)
 STALE_EXEMPT_TYPES = ['s', 'j']
@@ -200,28 +202,6 @@ def get_total_times(records: Sequence[Record], aggregate_by: Optional[str]) -> S
 
 # OUTPUT
 
-HTML_TEMPLATE = """<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-{refresh}
-    <title> mylog </title>
-    <style>
-{style}
-    </style>
-</head>
-<body>
-    <h1> mylog </h1>
-    <ol>
-{days}
-    </ol>
-</body>
-</html>
-"""
-
-REFRESH_TEMPLATE = '    <meta http-equiv="refresh" content="{seconds}">'
-
 COLOR_CODES = {
     '': '\033[0m',
     'red': '\033[0;31m',
@@ -256,27 +236,6 @@ TYPE_COLOR = {
 }
 
 
-DAY_TEMPLATE = """
-    <li>
-        <p> {fpath}:<br />{start_time} to {end_time} = {total_time} </p>
-        <div class="timeline timeline-small">
-{agg_lines}
-        </div>
-        <div class="timeline timeline-big">
-{lines}
-        </div>
-    </li>"""
-
-
-LINE_TEMPLATE = """
-    <div class="activity activity-{type} activity-big" style="flex: {ratio:.5f}">
-    <span class="tooltiptext">{label}{begin} to {end} = {duration} ({percent:.1f} %)</span></div>"""  # noqa
-
-AGG_LINE_TEMPLATE = """
-    <div class="activity activity-{type} activity-small" style="flex: {ratio:.5f}">
-    <span class="tooltiptext">{type}<br />{duration} ({percent:.1f} %)</span></div>"""
-
-
 def table2strs(table: List[Tuple[str, List[str]]], pad: str = ' ', spad: str = '',
         sep: str = ' ') -> List[Tuple[str, str]]:
     lengths = []  # type: List[int]
@@ -309,27 +268,28 @@ def get_ticks(start_time: time, end_time: time) -> Mapping[int, float]:
     return map
 
 
-def make_day_report(fpath: str, records: Sequence[Record], type_agg: SP2TDDict,
-        start_time: time, end_time: time) -> str:
+def get_day_context(fpath: str, records: Sequence[Record], type_agg: SP2TDDict,
+        start_time: time, end_time: time) -> Mapping[str, Any]:
     total_time = t2dt(end_time) - t2dt(start_time)
-    lines = []
-    for r in records:
-        ratio = r.duration / total_time
-        label = r.get_sublabel()
-        if label:
-            label += ':<br />'
-        line = LINE_TEMPLATE.format(begin=r.start_time.strftime('%H:%M'),
-            end=r.end_time.strftime('%H:%M'), duration=r.duration,
-            type=TYPE_NAME.get(r.work_type, ''), ratio=ratio, percent=100 * ratio, label=label)
-        lines.append(line)
-    agg_lines = []
-    for (color, k), v in type_agg.items():
-        ratio = v / total_time
-        agg_lines.append(AGG_LINE_TEMPLATE.format(type=TYPE_NAME.get(k, ''), duration=v,
-            ratio=ratio, percent=100 * ratio))
-    return DAY_TEMPLATE.format(fpath=fpath, total_time=total_time,
-        start_time=start_time.strftime('%H:%M'), end_time=end_time.strftime('%H:%M'),
-        lines=''.join(lines), agg_lines=''.join(agg_lines))
+    return {
+        'fpath': fpath,
+        'total_time': total_time,
+        'start_time': start_time.strftime('%H:%M'),
+        'end_time': end_time.strftime('%H:%M'),
+        'agg_lines': [{
+            'duration': v,
+            'ratio': v / total_time,
+            'type': TYPE_NAME.get(k, ''),
+            } for (color, k), v in type_agg.items()],
+        'lines': [{
+            'duration': r.duration,
+            'ratio': r.duration / total_time,
+            'label': r.get_sublabel(),
+            'start_time': r.start_time.strftime('%H:%M'),
+            'end_time': r.end_time.strftime('%H:%M'),
+            'type': TYPE_NAME.get(r.work_type, ''),
+            } for r in records],
+        }
 
 
 def pretty_str_timedelta(td: timedelta, total_time: timedelta, total_days: int = 1) -> str:
@@ -421,8 +381,13 @@ def main() -> int:
     all_aggs = {}  # type: SP2TDDict
     type_aggs = {}  # type: SP2TDDict
     label_aggs = {}  # type: SP2TDDict
-    day_reports = []  # type: List[str]
     total_total_time = timedelta(0)
+
+    report_context = {
+        'style': get_style(),
+        'refresh_time': args.refresh_time,
+        'days': [],
+    }  # type: Dict[str, Any]
     for fpath in fpaths:
         try:
             records = parse_file(fpath)
@@ -458,16 +423,17 @@ def main() -> int:
             print_by_type_and_label(all_agg, type_agg, label_agg, args.sort, args.long,
                 1, total_time)
 
-        day_reports.append(make_day_report(fpath, records, type_agg, min_time, max_time))
+        report_context['days'].append(get_day_context(
+            fpath, records, type_agg, min_time, max_time))
 
     if len(fpaths) > 1:
         print('Summary:\n')
         print_by_type_and_label(all_aggs, type_aggs, label_aggs, args.sort, args.long, len(fpaths),
             total_total_time, timedelta(minutes=5) * len(fpaths))
 
-    refresh_tag = '' if args.refresh_time is None else REFRESH_TEMPLATE.format(seconds=args.refresh_time)  # noqa
-    report = HTML_TEMPLATE.format(style=get_style(), days=''.join(day_reports),
-        refresh=refresh_tag)
+    with open(pjoin(CURDIR, 'report.html.jinja2')) as fp:
+        html_template = Template(fp.read())
+    report = html_template.render(report_context)
     with open(args.report_path, 'w') as fobj:
         fobj.write(report)
     return 1 if err_count > 0 else 0
