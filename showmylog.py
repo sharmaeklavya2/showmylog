@@ -9,29 +9,98 @@ from os.path import join as pjoin
 from os.path import realpath, dirname
 from datetime import date, time, timedelta, datetime
 import typing
-from typing import Any, Dict, List, Mapping, MutableSequence, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, List, Mapping, MutableSequence, Optional, Sequence, Tuple, TypeVar
 from collections import OrderedDict
+
+TODAY = date.today()
+YESTERDAY = TODAY - timedelta(days=1)
+STALE_EXEMPT_TYPES = ['s', 'j']
 
 HOMEDIR = os.path.expanduser('~')
 DEFAULT_REPORT_PATH = pjoin(HOMEDIR, 'mylog', 'report.html')
 PATH_PATTERN = pjoin(HOMEDIR, 'mylog', '{}.mylog')
-
-TODAY = date.today()
-YESTERDAY = TODAY - timedelta(days=1)
 TODAY_PATH = PATH_PATTERN.format(str(TODAY))
 YESTERDAY_PATH = PATH_PATTERN.format(str(YESTERDAY))
-
 CURDIR = dirname(realpath(__file__))
 
+K = TypeVar('K')
+addableV = TypeVar('addableV', timedelta, int)
 SP2TDDict = Dict[Tuple[str, str], timedelta]  # string-pair to timedelta dict
 
 err_count = 0
+printed_now = False
+style = None
 
 
 def t2dt(t: time) -> datetime:
     """ Convert a time object into a datetime object with some fixed date """
     return datetime.combine(date.min, t)
 
+
+def add_to_dict(dest: Dict[K, addableV], source: Mapping[K, addableV]) -> None:
+    for k, v in source.items():
+        if k in dest:
+            dest[k] += v
+        else:
+            dest[k] = v
+
+
+def color_print(*args: Any, color: str = '', file: typing.TextIO = sys.stdout,
+        **kwargs: Any) -> None:
+    if file.isatty():
+        try:
+            print(COLOR_CODES[color], file=file, end='', **kwargs)
+            print(*args, file=file, **kwargs)
+        finally:
+            print(COLOR_CODES[''], file=file, end='', flush=True, **kwargs)
+    else:
+        print(*args, file=file, **kwargs)
+
+
+def print_error(*args: Any, count: bool = True, **kwargs: Any) -> None:
+    global err_count
+    if count:
+        err_count += 1
+    color_print(*args, file=sys.stderr, color='red', **kwargs)
+
+
+class Record:
+    repr_str = ('Record(work_type={}, start_time={}, end_time={}'
+        ', penalty={}, duration={}, label={}, sublabel={})')
+
+    def __init__(self, start_time: time, end_time: time, work_type: str = 'u',
+            penalty: timedelta = timedelta(0), duration: Optional[timedelta] = None,
+            label: str = '', sublabel: str = '', words: Optional[Sequence[str]] = None):
+        self.start_time = start_time
+        self.end_time = end_time
+        self.work_type = work_type
+        self.penalty = penalty
+        if duration is None:
+            self.duration: timedelta = t2dt(end_time) - t2dt(start_time)
+        else:
+            self.duration = duration
+        self.label = label
+        self.sublabel = sublabel
+        self.words = words
+
+    def __str__(self) -> str:
+        if self.words is None:
+            return repr(self)
+        else:
+            return ' '.join(self.words)
+
+    def __repr__(self) -> str:
+        return Record.repr_str.format(repr(self.work_type), self.start_time, self.end_time,
+            self.penalty, self.duration, repr(self.label), repr(self.sublabel))
+
+    def get_sublabel(self) -> str:
+        if self.sublabel:
+            return '{}: {}'.format(self.label, self.sublabel)
+        else:
+            return self.label
+
+
+# PARSE (read input files and simultaneously check for inconsistencies/errors in input)
 
 def parse_time(s: str) -> time:
     hour_str, min_str = s.replace('?', '0').replace('-', '0').split(':')
@@ -45,60 +114,21 @@ def parse_timedelta(s: str) -> timedelta:
     return timedelta(0, 3600 * int(hour_str) + 60 * int(min_str))
 
 
-class Record:
-    work_type = ':'
-    start_time = time(0)
-    end_time = time(0)
-    penalty = timedelta(0)
-    duration = timedelta(0)
-    label = ''
-    sublabel = ''
-
-    format_str = ('Record(work_type={}, start_time={}, end_time={}'
-        ', penalty={}, duration={}, label={}, sublabel={})')
-
-    def __init__(self, words):
-        # type: (Sequence[Union[str, time]]) -> None
-        self.words = words
-        self.str_words = [str(x) for x in words]
-        if len(words) == 2:
-            self.start_time, self.end_time = typing.cast(Tuple[time, time], words)
-            self.work_type = 'u'
-            self.duration = t2dt(self.end_time) - t2dt(self.start_time)
-        elif words:
-            words = typing.cast(Sequence[str], words)
-            self.work_type, start_time_str, end_time_str, penalty_str, duration_str,\
-                self.label, *rest = words
-            self.start_time = parse_time(start_time_str)
-            self.end_time = parse_time(end_time_str)
-            if self.end_time == time(0):
-                self.end_time = self.start_time
-            self.penalty = parse_timedelta(penalty_str)
-            self.duration = parse_timedelta(duration_str)
-            if len(rest) >= 1:
-                self.sublabel = rest[0]
-            if t2dt(self.end_time) - t2dt(self.start_time) != self.duration:
-                color_print("'{}' has incorrect duration".format(' '.join(words)),
-                    file=sys.stderr, color='red')
-                global err_count
-                err_count += 1
-
-    def __str__(self) -> str:
-        return Record.format_str.format(repr(self.work_type), self.start_time, self.end_time,
-            self.penalty, self.duration, repr(self.label), repr(self.sublabel))
-
-    def __repr__(self) -> str:
-        return str(self)
-
-    def get_sublabel(self) -> str:
-        if self.sublabel:
-            return '{}: {}'.format(self.label, self.sublabel)
-        else:
-            return self.label
+def parse_line(words: Sequence[str]) -> Record:
+    work_type, start_time_str, end_time_str, penalty_str, duration_str, label, *rest = words
+    start_time = parse_time(start_time_str)
+    end_time = parse_time(end_time_str)
+    if end_time == time(0):
+        end_time = start_time
+    penalty = parse_timedelta(penalty_str)
+    duration = parse_timedelta(duration_str)
+    sublabel = rest[0] if rest else ''
+    if t2dt(end_time) - t2dt(start_time) != duration:
+        print_error("'{}' has incorrect duration".format(' '.join(words)))
+    return Record(start_time, end_time, work_type, penalty, duration, label, sublabel, words)
 
 
-def parse_file(fname):
-    # type: (str) -> List[Record]
+def parse_file(fname: str) -> List[Record]:
     records = []  # type: List[Record]
     prev_record = None  # type: Optional[Record]
     with open(fname) as fobj:
@@ -106,31 +136,30 @@ def parse_file(fname):
             words = line.split('#', maxsplit=1)[0].split()
             if words:
                 if line.startswith(' '):
-                    words = [':'] + words
-                record = Record(words)
+                    words = ['u'] + words
+                record = parse_line(words)
                 if prev_record is not None:
                     ta = prev_record.end_time
                     tb = record.start_time
                     if ta < tb:
-                        records.append(Record((ta, tb)))
+                        records.append(Record(ta, tb))
                 records.append(record)
                 prev_record = record
     return records
 
 
-STALE_EXEMPT_TYPES = ['s', 'j']
-PRINTED_NOW = False
+# PROCESS
 
+def augment_records_with_current_time(records: MutableSequence[Record],
+        stale_limit: float) -> None:
+    now_ts = datetime.now()
+    global printed_now
+    if not printed_now:
+        print('current time:', now_ts)
+        printed_now = True
 
-def use_now_in_records(records, stale_limit):
-    # type: (MutableSequence[Record], float) -> None
     last_record = records[-1]
     last_time = last_record.end_time
-    now_ts = datetime.now()
-    global PRINTED_NOW
-    if not PRINTED_NOW:
-        print('current time:', now_ts)
-        PRINTED_NOW = True
     now = now_ts.time()
     diff = t2dt(now) - t2dt(last_record.start_time)
     if now < last_time:
@@ -139,18 +168,14 @@ def use_now_in_records(records, stale_limit):
         last_record.end_time = now
         last_record.duration = diff
     else:
-        records.append(Record((last_time, now)))
+        records.append(Record(last_time, now))
         diff = t2dt(now) - t2dt(last_time)
     if (stale_limit is not None and last_record.work_type not in STALE_EXEMPT_TYPES and  # noqa
             diff > timedelta(minutes=stale_limit)):
-        color_print("stale-limit reached for '{}'".format(' '.join(last_record.str_words)),
-            file=sys.stderr, color='red')
-        global err_count
-        err_count += 1
+        print_error("stale-limit reached for '{}'".format(str(last_record)))
 
 
-def get_total_times(records, aggregate_by):
-    # type: (Sequence[Record], Optional[str]) -> SP2TDDict
+def get_total_times(records: Sequence[Record], aggregate_by: Optional[str]) -> SP2TDDict:
     d = OrderedDict()  # type: SP2TDDict
     for record in records:
         if aggregate_by is None:
@@ -173,21 +198,7 @@ def get_total_times(records, aggregate_by):
     return d
 
 
-def table2strs(table, pad=' ', spad='', sep=' '):
-    # type: (List[Tuple[str, List[str]]], str, str, str) -> List[Tuple[str, str]]
-    lengths = []  # type: List[int]
-    for (color, row) in table:
-        for j, x in enumerate(row):
-            if j + 1 > len(lengths):
-                lengths += [0] * (j + 1 - len(lengths))
-            lengths[j] = max(lengths[j], len(x) + len(spad))
-    return [(color, sep.join([(x + spad).ljust(lengths[j], pad)
-        for j, x in enumerate(row)])) for (color, row) in table]
-
-
-with open(pjoin(CURDIR, 'style.css')) as fobj:
-    STYLE = fobj.read()
-
+# OUTPUT
 
 HTML_TEMPLATE = """<!DOCTYPE html>
 <html lang="en">
@@ -266,8 +277,27 @@ AGG_LINE_TEMPLATE = """
     <span class="tooltiptext">{type}<br />{duration} ({percent:.1f} %)</span></div>"""
 
 
-def get_ticks(start_time, end_time):
-    # type: (time, time) -> Mapping[int, float]
+def table2strs(table: List[Tuple[str, List[str]]], pad: str = ' ', spad: str = '',
+        sep: str = ' ') -> List[Tuple[str, str]]:
+    lengths = []  # type: List[int]
+    for (color, row) in table:
+        for j, x in enumerate(row):
+            if j + 1 > len(lengths):
+                lengths += [0] * (j + 1 - len(lengths))
+            lengths[j] = max(lengths[j], len(x) + len(spad))
+    return [(color, sep.join([(x + spad).ljust(lengths[j], pad)
+        for j, x in enumerate(row)])) for (color, row) in table]
+
+
+def get_style() -> str:
+    global style
+    if style is None:
+        with open(pjoin(CURDIR, 'style.css')) as fobj:
+            style = fobj.read()
+    return style
+
+
+def get_ticks(start_time: time, end_time: time) -> Mapping[int, float]:
     sdt = t2dt(start_time)
     total_time = t2dt(end_time) - sdt
     start_n = start_time.hour + (0 if start_time == time(hour=start_time.hour) else 1)
@@ -279,8 +309,8 @@ def get_ticks(start_time, end_time):
     return map
 
 
-def make_day_report(fpath, records, type_agg, start_time, end_time):
-    # type: (str, Sequence[Record], SP2TDDict, time, time) -> str
+def make_day_report(fpath: str, records: Sequence[Record], type_agg: SP2TDDict,
+        start_time: time, end_time: time) -> str:
     total_time = t2dt(end_time) - t2dt(start_time)
     lines = []
     for r in records:
@@ -302,8 +332,7 @@ def make_day_report(fpath, records, type_agg, start_time, end_time):
         lines=''.join(lines), agg_lines=''.join(agg_lines))
 
 
-def pretty_str_timedelta(td, total_time, total_days=1):
-    # type: (timedelta, timedelta, int) -> str
+def pretty_str_timedelta(td: timedelta, total_time: timedelta, total_days: int = 1) -> str:
     hours = td.seconds // 3600
     days = td.days
     mins = (td.seconds // 60) % 60
@@ -318,30 +347,9 @@ def pretty_str_timedelta(td, total_time, total_days=1):
     return s
 
 
-def color_print(*args, color='', file=sys.stdout, **kwargs):
-    # type: (*Any, str, typing.TextIO, **Any) -> None
-    if file.isatty():
-        try:
-            print(COLOR_CODES[color], file=file, end='', **kwargs)
-            print(*args, file=file, **kwargs)
-        finally:
-            print(COLOR_CODES[''], file=file, end='', **kwargs, flush=True)
-    else:
-        print(*args, file=file, **kwargs)
-
-
-def add_to_dict(dest, source):
-    # type: (Dict, Mapping) -> None
-    for k, v in source.items():
-        if k in dest:
-            dest[k] += v
-        else:
-            dest[k] = v
-
-
-def print_by_type_and_label(all_agg, type_agg, label_agg, sort, long, days,
-        total_time, time_limit=timedelta(0)):  # noqa
-    # type: (SP2TDDict, SP2TDDict, SP2TDDict, bool, bool, int, timedelta, timedelta) -> None
+def print_by_type_and_label(all_agg: SP2TDDict, type_agg: SP2TDDict, label_agg: SP2TDDict,
+        sort: bool, long: bool, days: int,
+        total_time: timedelta, time_limit: timedelta = timedelta(0)) -> None:
 
     items = all_agg.items()  # type: typing.Collection[Tuple[Tuple[str, str], timedelta]]
     for (color, k), v in items:
@@ -371,8 +379,7 @@ def print_by_type_and_label(all_agg, type_agg, label_agg, sort, long, days,
     print()
 
 
-def main():
-    # type: () -> int
+def main() -> int:
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('paths', nargs='*', default=['today'],
@@ -421,18 +428,16 @@ def main():
             records = parse_file(fpath)
         except FileNotFoundError:
             if not args.ignore_missing:
-                color_print("'{}' is '{}'".format(fpath, 'missing'), file=sys.stderr, color='red')
-                err_count += 1
+                print_error("'{}' is '{}'".format(fpath, 'missing'))
             continue
 
         if args.use_now and records:
-            use_now_in_records(records, args.stale_limit)
+            augment_records_with_current_time(records, args.stale_limit)
 
         records = [record for record in records if record.start_time != record.end_time]
         if not records:
             if not args.ignore_missing:
-                color_print("'{}' is '{}'".format(fpath, 'empty'), file=sys.stderr, color='red')
-                err_count += 1
+                print_error("'{}' is '{}'".format(fpath, 'empty'))
             continue
 
         min_time = records[0].start_time
@@ -461,7 +466,8 @@ def main():
             total_total_time, timedelta(minutes=5) * len(fpaths))
 
     refresh_tag = '' if args.refresh_time is None else REFRESH_TEMPLATE.format(seconds=args.refresh_time)  # noqa
-    report = HTML_TEMPLATE.format(style=STYLE, days=''.join(day_reports), refresh=refresh_tag)
+    report = HTML_TEMPLATE.format(style=get_style(), days=''.join(day_reports),
+        refresh=refresh_tag)
     with open(args.report_path, 'w') as fobj:
         fobj.write(report)
     return 1 if err_count > 0 else 0
