@@ -266,6 +266,19 @@ AGG_LINE_TEMPLATE = """
     <span class="tooltiptext">{type}<br />{duration} ({percent:.1f} %)</span></div>"""
 
 
+def get_ticks(start_time, end_time):
+    # type: (time, time) -> Mapping[int, float]
+    sdt = t2dt(start_time)
+    total_time = t2dt(end_time) - sdt
+    start_n = start_time.hour + (0 if start_time == time(hour=start_time.hour) else 1)
+    end_n = end_time.hour
+
+    map = OrderedDict()
+    for i in range(start_n, end_n + 1):
+        map[i] = (t2dt(time(hour=i)) - sdt) / total_time
+    return map
+
+
 def make_day_report(fpath, records, type_agg, start_time, end_time):
     # type: (str, Sequence[Record], SP2TDDict, time, time) -> str
     total_time = t2dt(end_time) - t2dt(start_time)
