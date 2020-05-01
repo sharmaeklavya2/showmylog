@@ -48,3 +48,26 @@
 .activity:hover .tooltiptext {
     visibility: visible;
 }
+
+.ticks {
+    display: flex;
+    width: 800px;
+    margin-bottom: 16px;
+}
+.tick {
+    box-sizing: border-box;
+    border-right: 1px solid black;
+    position: relative;
+    display: inline-block;
+    height: 5px;
+}
+.tick-text{
+    position: absolute;
+    right: 0px;
+    margin-right: -15px;
+    margin-top: 4px;
+    width: 30px;
+    text-align: center;
+    font-size: 75%;
+    opacity: 0.8;
+}

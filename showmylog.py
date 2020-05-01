@@ -246,16 +246,29 @@ def get_style() -> str:
     return style
 
 
-def get_ticks(start_time: time, end_time: time) -> Mapping[int, float]:
+class Ticks(typing.NamedTuple):
+    n: int
+    a_label: int
+    d_label: int
+    a_len: float
+    d_len: float
+
+
+def get_ticks(start_time: time, end_time: time) -> Ticks:
     sdt = t2dt(start_time)
     total_time = t2dt(end_time) - sdt
     start_n = start_time.hour + (0 if start_time == time(hour=start_time.hour) else 1)
     end_n = end_time.hour
 
-    map = OrderedDict()
-    for i in range(start_n, end_n + 1):
-        map[i] = (t2dt(time(hour=i)) - sdt) / total_time
-    return map
+    if end_n < start_n:
+        return Ticks(0, 0, 0, 0, 0)
+    scale_factor = (end_n - start_n) // 10 + 1
+
+    return Ticks(n=(end_n - start_n) // scale_factor + 1,
+        a_label=start_n, d_label=scale_factor,
+        a_len=(t2dt(time(hour=start_n)) - t2dt(start_time)) / total_time,
+        d_len=timedelta(hours=1) / total_time * scale_factor,
+        )
 
 
 def get_day_context(fpath: str, records: Sequence[Record], type_agg: SP2TDDict,
@@ -266,6 +279,7 @@ def get_day_context(fpath: str, records: Sequence[Record], type_agg: SP2TDDict,
         'total_time': total_time,
         'start_time': start_time.strftime('%H:%M'),
         'end_time': end_time.strftime('%H:%M'),
+        'ticks': get_ticks(start_time, end_time),
         'agg_lines': [{
             'duration': v,
             'ratio': v / total_time,

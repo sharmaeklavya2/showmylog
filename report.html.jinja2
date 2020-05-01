@@ -34,6 +34,16 @@
             {{line.start_time}} to {{line.end_time}} = {{line.duration}} ({{'{:.1f}'.format(100 * line.ratio)}} %)</span></div>
     {% endfor %}
         </div>
+    {% if day.ticks.n %}
+        <div class="ticks">
+            <div class="tick" style="flex: {{'{:.6f}'.format(day.ticks.a_len)}}">
+                <span class="tick-text">{{day.ticks.a_label}}</span></div>
+        {% for i in range(1, day.ticks.n) %}
+            <div class="tick" style="flex: {{'{:.6f}'.format(day.ticks.d_len)}}">
+                <span class="tick-text">{{(day.ticks.a_label + i * day.ticks.d_label)}}</span></div>
+        {% endfor %}
+        </div>
+    {% endif %}
     </li>
 {% endfor %}
     </ol>
