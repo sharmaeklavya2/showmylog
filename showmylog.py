@@ -11,12 +11,15 @@ from datetime import date, time, timedelta, datetime
 import typing
 from typing import Any, Dict, List, Mapping, MutableSequence, Optional, Sequence, Tuple, TypeVar
 from collections import OrderedDict
+import json
 
 from jinja2 import Template
 
 TODAY = date.today()
 YESTERDAY = TODAY - timedelta(days=1)
 STALE_EXEMPT_TYPES = ['s', 'j']
+TERM_RESET_COLOR_CODE = '\033[0m'
+TERM_ERROR_COLOR_CODE = '\033[0;31m'  # red
 
 HOMEDIR = os.path.expanduser('~')
 DEFAULT_REPORT_PATH = pjoin(HOMEDIR, 'mylog', 'report.html')
@@ -32,6 +35,9 @@ SP2TDDict = Dict[Tuple[str, str], timedelta]  # string-pair to timedelta dict
 err_count = 0
 printed_now = False
 style = None
+activity_names = {}
+activity_term_colors = {}
+activity_web_colors = {}
 
 
 def t2dt(t: time) -> datetime:
@@ -47,14 +53,32 @@ def add_to_dict(dest: Dict[K, addableV], source: Mapping[K, addableV]) -> None:
             dest[k] = v
 
 
-def color_print(*args: Any, color: str = '', file: typing.TextIO = sys.stdout,
+def init_activity_and_color_info():
+    with open(pjoin(CURDIR, 'colors.json')) as fp:
+        color_info = json.load(fp)
+    with open(pjoin(CURDIR, 'activity_types.json')) as fp:
+        activity_info = json.load(fp)
+
+    for activity_type, d in activity_info.items():
+        if 'name' not in d:
+            raise ValueError("activity_type '{}' has no name".format(activity_type))
+        activity_names[activity_type] = d['name']
+        if 'color' in d and d['color'] in color_info:
+            ci = color_info[d['color']]
+            if 'term' in ci:
+                activity_term_colors[activity_type] = ci['term']
+            if 'web' in ci:
+                activity_web_colors[d['name']] = ci['web']
+
+
+def color_print(*args: Any, color_code: Optional[str] = None, file: typing.TextIO = sys.stdout,
         **kwargs: Any) -> None:
-    if file.isatty():
+    if color_code and file.isatty():
         try:
-            print(COLOR_CODES[color], file=file, end='', **kwargs)
+            print(color_code, file=file, end='', **kwargs)
             print(*args, file=file, **kwargs)
         finally:
-            print(COLOR_CODES[''], file=file, end='', flush=True, **kwargs)
+            print(TERM_RESET_COLOR_CODE, file=file, end='', flush=True, **kwargs)
     else:
         print(*args, file=file, **kwargs)
 
@@ -63,7 +87,7 @@ def print_error(*args: Any, count: bool = True, **kwargs: Any) -> None:
     global err_count
     if count:
         err_count += 1
-    color_print(*args, file=sys.stderr, color='red', **kwargs)
+    color_print(*args, file=sys.stderr, color_code=TERM_ERROR_COLOR_CODE, **kwargs)
 
 
 class Record:
@@ -191,61 +215,27 @@ def get_total_times(records: Sequence[Record], aggregate_by: Optional[str]) -> S
         else:
             raise Exception('aggregator {} not allowed'.format(repr(aggregate_by)))
         if aggregate_by is None:
-            color = ''
+            activity_type = ''
         else:
-            color = TYPE_COLOR.get(record.activity_type, '')
-        if (color, key) not in d:
-            d[(color, key)] = timedelta(0)
-        d[(color, key)] += record.duration
+            activity_type = record.activity_type
+        if (activity_type, key) not in d:
+            d[(activity_type, key)] = timedelta(0)
+        d[(activity_type, key)] += record.duration
     return d
 
 
 # OUTPUT
 
-COLOR_CODES = {
-    '': '\033[0m',
-    'red': '\033[0;31m',
-    'green': '\033[0;32m',
-    'yellow': '\033[0;33m',
-    'blue': '\033[0;34m',
-    'magenta': '\033[0;35m',
-    'cyan': '\033[0;36m',
-    'white': '\033[0;37m',
-}
-
-TYPE_NAME = {
-    '+': 'good',
-    's': 'sleep',
-    '-': 'bad',
-    '!': 'warn',
-    ':': 'ok',
-    'u': 'uncounted',
-    'j': 'job',
-    '': 'default',
-}
-
-TYPE_COLOR = {
-    '+': 'green',
-    '-': 'red',
-    '!': 'yellow',
-    ':': '',
-    'u': '',
-    '': '',
-    'j': '',
-    's': '',
-}
-
-
 def table2strs(table: List[Tuple[str, List[str]]], pad: str = ' ', spad: str = '',
         sep: str = ' ') -> List[Tuple[str, str]]:
     lengths = []  # type: List[int]
-    for (color, row) in table:
+    for (activity_type, row) in table:
         for j, x in enumerate(row):
             if j + 1 > len(lengths):
                 lengths += [0] * (j + 1 - len(lengths))
             lengths[j] = max(lengths[j], len(x) + len(spad))
-    return [(color, sep.join([(x + spad).ljust(lengths[j], pad)
-        for j, x in enumerate(row)])) for (color, row) in table]
+    return [(activity_type, sep.join([(x + spad).ljust(lengths[j], pad)
+        for j, x in enumerate(row)])) for (activity_type, row) in table]
 
 
 def get_style() -> str:
@@ -279,15 +269,15 @@ def get_day_context(fpath: str, records: Sequence[Record], type_agg: SP2TDDict,
         'agg_lines': [{
             'duration': v,
             'ratio': v / total_time,
-            'type': TYPE_NAME.get(k, ''),
-            } for (color, k), v in type_agg.items()],
+            'type': activity_names.get(k, 'unknown'),
+            } for (activity_type, k), v in type_agg.items()],
         'lines': [{
             'duration': r.duration,
             'ratio': r.duration / total_time,
             'label': r.get_sublabel(),
             'start_time': r.start_time.strftime('%H:%M'),
             'end_time': r.end_time.strftime('%H:%M'),
-            'type': TYPE_NAME.get(r.activity_type, ''),
+            'type': activity_names.get(r.activity_type, 'unknown'),
             } for r in records],
         }
 
@@ -312,7 +302,7 @@ def print_by_type_and_label(all_agg: SP2TDDict, type_agg: SP2TDDict, label_agg: 
         total_time: timedelta, time_limit: timedelta = timedelta(0)) -> None:
 
     items = all_agg.items()  # type: typing.Collection[Tuple[Tuple[str, str], timedelta]]
-    for (color, k), v in items:
+    for (activity_type, k), v in items:
         print('total:', pretty_str_timedelta(v, total_time, days))
     print()
 
@@ -321,8 +311,9 @@ def print_by_type_and_label(all_agg: SP2TDDict, type_agg: SP2TDDict, label_agg: 
     items = type_agg.items()
     if sort:
         items = sorted(items, reverse=True, key=(lambda x: x[1]))
-    for (color, k), v in items:
-        color_print(k, pretty_str_timedelta(v, total_time, days), color=color)
+    for (activity_type, k), v in items:
+        color_print(k, pretty_str_timedelta(v, total_time, days),
+            color_code=activity_term_colors.get(activity_type))
     print()
 
     print('By label:')
@@ -331,11 +322,11 @@ def print_by_type_and_label(all_agg: SP2TDDict, type_agg: SP2TDDict, label_agg: 
     table = []
     if sort:
         items = sorted(items, reverse=True, key=(lambda x: x[1]))
-    for (color, k), v in items:
+    for (activity_type, k), v in items:
         if v >= time_limit:
-            table.append((color, [k, pretty_str_timedelta(v, total_time, days)]))
-    for (color, l) in table2strs(table, '.', ' '):
-        color_print(l, color=color)
+            table.append((activity_type, [k, pretty_str_timedelta(v, total_time, days)]))
+    for (activity_type, l) in table2strs(table, '.', ' '):
+        color_print(l, color_code=activity_term_colors.get(activity_type))
     print()
 
 
@@ -381,9 +372,11 @@ def main() -> int:
     label_aggs = {}  # type: SP2TDDict
     total_total_time = timedelta(0)
 
+    init_activity_and_color_info()
     report_context = {
         'style': get_style(),
         'refresh_time': args.refresh_time,
+        'activity_web_colors': activity_web_colors,
         'days': [],
     }  # type: Dict[str, Any]
     for fpath in fpaths:

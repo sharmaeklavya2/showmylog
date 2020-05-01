@@ -9,6 +9,9 @@
     <title> mylog </title>
     <style>
 {{style}}
+{%- for activity_type, color in activity_web_colors.items() %}
+.activity-{{activity_type}} {background-color: {{color}};}
+{%- endfor %}
     </style>
 </head>
 <body>

@@ -1,0 +1,9 @@
+{
+    "+": {"name": "good", "color": "green"},
+    "s": {"name": "sleep", "color": "brown"},
+    "-": {"name": "bad", "color": "red"},
+    "!": {"name": "warn", "color": "yellow"},
+    ":": {"name": "ok", "color": "light-gray"},
+    "u": {"name": "uncounted"},
+    "j": {"name": "job", "color": "dark-gray"}
+}

@@ -1,0 +1,36 @@
+{
+    "white": {
+        "term": "\u001b[0;37m",
+        "web": "rgba(255, 255, 0, 1)"
+    },
+    "dark-gray": {
+        "web": "rgba(120, 120, 120, 1)"
+    },
+    "light-gray": {
+        "web": "rgba(211, 211, 211, 1)"
+    },
+    "red": {
+        "term": "\u001b[0;31m",
+        "web": "rgba(217, 83, 79, 1)"
+    },
+    "green": {
+        "term": "\u001b[0;32m",
+        "web": "rgba(92, 184, 92, 1)"
+    },
+    "brown": {
+        "web": "rgba(128, 128, 0, 1)"
+    },
+    "yellow": {
+        "term": "\u001b[0;33m",
+        "web": "rgba(240, 173, 78, 1)"
+    },
+    "blue": {
+        "term": "\u001b[0;34m"
+    },
+    "magenta": {
+        "term": "\u001b[0;35m"
+    },
+    "cyan": {
+        "term": "\u001b[0;36m"
+    }
+}

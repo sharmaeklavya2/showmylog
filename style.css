@@ -48,22 +48,3 @@
 .activity:hover .tooltiptext {
     visibility: visible;
 }
-
-.activity-good {
-    background-color: rgba(92, 184, 92, 1);
-}
-.activity-sleep {
-    background-color: rgba(128, 128, 0, 1);
-}
-.activity-bad {
-    background-color: rgba(217, 83, 79, 1);
-}
-.activity-warn {
-    background-color: rgba(240, 173, 78, 1);
-}
-.activity-ok {
-    background-color: rgba(211, 211, 211, 1);
-}
-.activity-job {
-    background-color: rgba(120, 120, 120, 1);
-}
