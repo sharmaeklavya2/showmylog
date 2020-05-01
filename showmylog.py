@@ -67,15 +67,15 @@ def print_error(*args: Any, count: bool = True, **kwargs: Any) -> None:
 
 
 class Record:
-    repr_str = ('Record(work_type={}, start_time={}, end_time={}'
+    repr_str = ('Record(activity_type={}, start_time={}, end_time={}'
         ', penalty={}, duration={}, label={}, sublabel={})')
 
-    def __init__(self, start_time: time, end_time: time, work_type: str = 'u',
+    def __init__(self, start_time: time, end_time: time, activity_type: str = 'u',
             penalty: timedelta = timedelta(0), duration: Optional[timedelta] = None,
             label: str = '', sublabel: str = '', words: Optional[Sequence[str]] = None):
         self.start_time = start_time
         self.end_time = end_time
-        self.work_type = work_type
+        self.activity_type = activity_type
         self.penalty = penalty
         if duration is None:
             self.duration: timedelta = t2dt(end_time) - t2dt(start_time)
@@ -92,7 +92,7 @@ class Record:
             return ' '.join(self.words)
 
     def __repr__(self) -> str:
-        return Record.repr_str.format(repr(self.work_type), self.start_time, self.end_time,
+        return Record.repr_str.format(repr(self.activity_type), self.start_time, self.end_time,
             self.penalty, self.duration, repr(self.label), repr(self.sublabel))
 
     def get_sublabel(self) -> str:
@@ -117,7 +117,7 @@ def parse_timedelta(s: str) -> timedelta:
 
 
 def parse_line(words: Sequence[str]) -> Record:
-    work_type, start_time_str, end_time_str, penalty_str, duration_str, label, *rest = words
+    activity_type, start_time_str, end_time_str, penalty_str, duration_str, label, *rest = words
     start_time = parse_time(start_time_str)
     end_time = parse_time(end_time_str)
     if end_time == time(0):
@@ -127,7 +127,7 @@ def parse_line(words: Sequence[str]) -> Record:
     sublabel = rest[0] if rest else ''
     if t2dt(end_time) - t2dt(start_time) != duration:
         print_error("'{}' has incorrect duration".format(' '.join(words)))
-    return Record(start_time, end_time, work_type, penalty, duration, label, sublabel, words)
+    return Record(start_time, end_time, activity_type, penalty, duration, label, sublabel, words)
 
 
 def parse_file(fname: str) -> List[Record]:
@@ -166,13 +166,13 @@ def augment_records_with_current_time(records: MutableSequence[Record],
     diff = t2dt(now) - t2dt(last_record.start_time)
     if now < last_time:
         return
-    if last_record.work_type == 'u' or (last_time == last_record.start_time):
+    if last_record.activity_type == 'u' or (last_time == last_record.start_time):
         last_record.end_time = now
         last_record.duration = diff
     else:
         records.append(Record(last_time, now))
         diff = t2dt(now) - t2dt(last_time)
-    if (stale_limit is not None and last_record.work_type not in STALE_EXEMPT_TYPES and  # noqa
+    if (stale_limit is not None and last_record.activity_type not in STALE_EXEMPT_TYPES and  # noqa
             diff > timedelta(minutes=stale_limit)):
         print_error("stale-limit reached for '{}'".format(str(last_record)))
 
@@ -182,8 +182,8 @@ def get_total_times(records: Sequence[Record], aggregate_by: Optional[str]) -> S
     for record in records:
         if aggregate_by is None:
             key = 'total'
-        elif aggregate_by == 'work_type':
-            key = record.work_type
+        elif aggregate_by == 'activity_type':
+            key = record.activity_type
         elif aggregate_by == 'label':
             key = record.label
         elif aggregate_by == 'sublabel':
@@ -193,7 +193,7 @@ def get_total_times(records: Sequence[Record], aggregate_by: Optional[str]) -> S
         if aggregate_by is None:
             color = ''
         else:
-            color = TYPE_COLOR.get(record.work_type, '')
+            color = TYPE_COLOR.get(record.activity_type, '')
         if (color, key) not in d:
             d[(color, key)] = timedelta(0)
         d[(color, key)] += record.duration
@@ -287,7 +287,7 @@ def get_day_context(fpath: str, records: Sequence[Record], type_agg: SP2TDDict,
             'label': r.get_sublabel(),
             'start_time': r.start_time.strftime('%H:%M'),
             'end_time': r.end_time.strftime('%H:%M'),
-            'type': TYPE_NAME.get(r.work_type, ''),
+            'type': TYPE_NAME.get(r.activity_type, ''),
             } for r in records],
         }
 
@@ -413,7 +413,7 @@ def main() -> int:
 
         all_agg = get_total_times(records, None)
         add_to_dict(all_aggs, all_agg)
-        type_agg = get_total_times(records, 'work_type')
+        type_agg = get_total_times(records, 'activity_type')
         add_to_dict(type_aggs, type_agg)
         label_agg = get_total_times(records, 'label')
         add_to_dict(label_aggs, label_agg)
