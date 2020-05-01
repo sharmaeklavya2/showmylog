@@ -362,8 +362,6 @@ def main() -> int:
         help="don't raise errors for missing or empty files")
     args = parser.parse_args()  # type: Any
 
-    global err_count
-
     if args.report_path is None:
         args.report_path = DEFAULT_REPORT_PATH
         os.makedirs(pjoin(HOMEDIR, 'mylog'), exist_ok=True)
