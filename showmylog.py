@@ -32,7 +32,7 @@ K = TypeVar('K')
 addableV = TypeVar('addableV', timedelta, int)
 SP2TDDict = Dict[Tuple[str, str], timedelta]  # string-pair to timedelta dict
 
-err_count = 0
+errors = []
 printed_now = False
 style = None
 activity_names = {}
@@ -86,11 +86,14 @@ def color_print(*args: Any, color_code: Optional[str] = None, file: typing.TextI
         print(*args, file=file, **kwargs)
 
 
-def print_error(*args: Any, count: bool = True, **kwargs: Any) -> None:
-    global err_count
-    if count:
-        err_count += 1
-    color_print(*args, file=sys.stderr, color_code=TERM_ERROR_COLOR_CODE, **kwargs)
+def print_error(*args: Any) -> None:
+    errors.append(args)
+    color_print(*args, file=sys.stderr, color_code=TERM_ERROR_COLOR_CODE)
+
+
+def print_all_errors() -> None:
+    for args in errors:
+        color_print(*args, file=sys.stderr, color_code=TERM_ERROR_COLOR_CODE)
 
 
 class Record:
@@ -445,7 +448,8 @@ def main() -> int:
     report = html_template.render(report_context)
     with open(args.report_path, 'w') as fobj:
         fobj.write(report)
-    return 1 if err_count > 0 else 0
+    print_all_errors()
+    return 1 if len(errors) > 0 else 0
 
 
 if __name__ == '__main__':
