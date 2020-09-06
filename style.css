@@ -1,6 +1,18 @@
+body {
+    color: rgb(50, 50, 50);
+    --border-color: black;
+}
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: rgb(27, 30, 32);
+        --text-color: rgb(220, 220, 220);
+        color: var(--text-color);
+        --border-color: rgb(120, 120, 120);
+    }
+}
+
 .timeline {
-    background-color: white;
-    border: 1px solid black;
+    border: 1px solid var(--border-color);
     display: flex;
 }
 
@@ -12,7 +24,6 @@
 }
 
 .activity {
-    /*outline: 1px solid black;*/
     position: relative;
     display: inline-block;
 }
@@ -24,9 +35,17 @@
 }
 
 .activity .tooltiptext {
-    visibility: hidden;
     background-color: black;
     color: white;
+}
+@media (prefers-color-scheme: dark) {
+    .activity .tooltiptext {
+        background-color: var(--text-color);
+        color: black;
+    }
+}
+.activity .tooltiptext {
+    visibility: hidden;
     border-radius: 6px;
     padding: 5px 10px;
     white-space: nowrap;
@@ -56,7 +75,7 @@
 }
 .tick {
     box-sizing: border-box;
-    border-right: 1px solid black;
+    border-right: 1px solid var(--border-color);
     position: relative;
     display: inline-block;
     height: 5px;

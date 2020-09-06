@@ -12,6 +12,11 @@
 {%- for activity_type, color in activity_web_colors.items() %}
 .activity-{{activity_type}} {background-color: {{color}};}
 {%- endfor %}
+@media (prefers-color-scheme: dark) {
+{%- for activity_type, color in activity_web_dark_colors.items() %}
+.activity-{{activity_type}} {background-color: {{color}};}
+{%- endfor %}
+}
     </style>
 </head>
 <body>

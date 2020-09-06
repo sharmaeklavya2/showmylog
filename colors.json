@@ -1,28 +1,34 @@
 {
     "white": {
         "term": "\u001b[0;37m",
-        "web": "rgba(255, 255, 0, 1)"
+        "web": "rgb(255, 255, 0)",
+        "web.dark": "rgb(27, 30, 32)"
     },
     "dark-gray": {
-        "web": "rgba(120, 120, 120, 1)"
+        "web": "rgb(120, 120, 120)"
     },
     "light-gray": {
-        "web": "rgba(211, 211, 211, 1)"
+        "web": "rgb(211, 211, 211)",
+        "web.dark": "rgb(80, 80, 80)"
     },
     "red": {
         "term": "\u001b[0;31m",
-        "web": "rgba(217, 83, 79, 1)"
+        "web": "hsl(0, 64%, 60%)",
+        "web.dark": "hsl(0, 64%, 40%)"
     },
     "green": {
         "term": "\u001b[0;32m",
-        "web": "rgba(92, 184, 92, 1)"
+        "web": "hsl(120, 40%, 55%)",
+        "web.dark": "hsl(120, 40%, 35%)"
     },
     "brown": {
-        "web": "rgba(128, 128, 0, 1)"
+        "web": "hsl(50, 100%, 35%)",
+        "web.dark": "hsl(50, 100%, 20%)"
     },
     "yellow": {
         "term": "\u001b[0;33m",
-        "web": "rgba(240, 173, 78, 1)"
+        "web": "hsl(35, 84%, 60%)",
+        "web.dark": "hsl(35, 84%, 35%)"
     },
     "blue": {
         "term": "\u001b[0;34m"

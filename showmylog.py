@@ -38,6 +38,7 @@ style = None
 activity_names = {}
 activity_term_colors = {}
 activity_web_colors = {}
+activity_web_dark_colors = {}
 
 
 def t2dt(t: time) -> datetime:
@@ -69,6 +70,8 @@ def init_activity_and_color_info():
                 activity_term_colors[activity_type] = ci['term']
             if 'web' in ci:
                 activity_web_colors[d['name']] = ci['web']
+            if 'web.dark' in ci:
+                activity_web_dark_colors[d['name']] = ci['web.dark']
 
 
 def color_print(*args: Any, color_code: Optional[str] = None, file: typing.TextIO = sys.stdout,
@@ -391,6 +394,7 @@ def main() -> int:
         'style': get_style(),
         'refresh_time': args.refresh_time,
         'activity_web_colors': activity_web_colors,
+        'activity_web_dark_colors': activity_web_dark_colors,
         'days': [],
     }  # type: Dict[str, Any]
     for fpath in fpaths:
