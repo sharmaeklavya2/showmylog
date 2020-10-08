@@ -4,8 +4,6 @@ __pycache__/
 .mypy_cache/
 /readme.html
 /output/
-/output.txt
-/report.html
 
 # Trash
 *~
