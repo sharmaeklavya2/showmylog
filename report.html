@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title> mylog </title>
+    <style>
+body {
+    color: rgb(50, 50, 50);
+    --border-color: black;
+}
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: rgb(27, 30, 32);
+        --text-color: rgb(220, 220, 220);
+        color: var(--text-color);
+        --border-color: rgb(120, 120, 120);
+    }
+}
+
+.timeline {
+    border: 1px solid var(--border-color);
+    display: flex;
+}
+
+.timeline-big {
+    width: 800px;
+}
+.timeline-small {
+    width: 300px;
+}
+
+.activity {
+    position: relative;
+    display: inline-block;
+}
+.activity-big {
+    height: 30px;
+}
+.activity-small {
+    height: 10px;
+}
+
+.activity .tooltiptext {
+    background-color: black;
+    color: white;
+}
+@media (prefers-color-scheme: dark) {
+    .activity .tooltiptext {
+        background-color: var(--text-color);
+        color: black;
+    }
+}
+.activity .tooltiptext {
+    visibility: hidden;
+    border-radius: 6px;
+    padding: 5px 10px;
+    white-space: nowrap;
+
+    position: absolute;
+    z-index: 100;
+}
+
+.activity-small .tooltiptext {
+    top: 45px;
+}
+.activity-big .tooltiptext {
+    top: 35px;
+}
+
+.activity:hover {
+    opacity: 0.8;
+}
+.activity:hover .tooltiptext {
+    visibility: visible;
+}
+
+.ticks {
+    display: flex;
+    width: 800px;
+    margin-bottom: 16px;
+}
+.tick {
+    box-sizing: border-box;
+    border-right: 1px solid var(--border-color);
+    position: relative;
+    display: inline-block;
+    height: 5px;
+}
+.tick-text{
+    position: absolute;
+    right: 0px;
+    margin-right: -15px;
+    margin-top: 4px;
+    width: 30px;
+    text-align: center;
+    font-size: 75%;
+    opacity: 0.8;
+}
+
+.activity-good {background-color: hsl(120, 40%, 55%);}
+.activity-sleep {background-color: hsl(50, 100%, 35%);}
+.activity-bad {background-color: hsl(0, 64%, 60%);}
+.activity-warn {background-color: hsl(35, 84%, 60%);}
+.activity-ok {background-color: rgb(211, 211, 211);}
+.activity-job {background-color: rgb(120, 120, 120);}
+@media (prefers-color-scheme: dark) {
+.activity-good {background-color: hsl(120, 40%, 35%);}
+.activity-sleep {background-color: hsl(50, 100%, 20%);}
+.activity-bad {background-color: hsl(0, 64%, 40%);}
+.activity-warn {background-color: hsl(35, 84%, 35%);}
+.activity-ok {background-color: rgb(80, 80, 80);}
+}
+    </style>
+</head>
+<body>
+    <h1> mylog </h1>
+    <ol>
+
+    <li>
+        <p> example.mylog:<br/>13:00 to 23:59 = 10:59:00 </p>
+        <div class="timeline timeline-small">
+    
+        <div class="activity activity-good activity-small" style="flex: 0.781487">
+        <span class="tooltiptext">good<br/>
+            8:35:00 (78.1 %)</span></div>
+    
+        <div class="activity activity-ok activity-small" style="flex: 0.083460">
+        <span class="tooltiptext">ok<br/>
+            0:55:00 (8.3 %)</span></div>
+    
+        <div class="activity activity-bad activity-small" style="flex: 0.030349">
+        <span class="tooltiptext">bad<br/>
+            0:20:00 (3.0 %)</span></div>
+    
+        <div class="activity activity-uncounted activity-small" style="flex: 0.015175">
+        <span class="tooltiptext">uncounted<br/>
+            0:10:00 (1.5 %)</span></div>
+    
+        <div class="activity activity-sleep activity-small" style="flex: 0.089530">
+        <span class="tooltiptext">sleep<br/>
+            0:59:00 (9.0 %)</span></div>
+    
+        </div>
+        <div class="timeline timeline-big">
+    
+        <div class="activity activity-good activity-big" style="flex: 0.136571">
+        <span class="tooltiptext">study: machine_learning:<br/>
+            13:00 to 14:30 = 1:30:00 (13.7 %)</span></div>
+    
+        <div class="activity activity-good activity-big" style="flex: 0.121396">
+        <span class="tooltiptext">study: linear_algebra:<br/>
+            14:30 to 15:50 = 1:20:00 (12.1 %)</span></div>
+    
+        <div class="activity activity-ok activity-big" style="flex: 0.015175">
+        <span class="tooltiptext">goto: lecture_hall:<br/>
+            15:50 to 16:00 = 0:10:00 (1.5 %)</span></div>
+    
+        <div class="activity activity-good activity-big" style="flex: 0.075873">
+        <span class="tooltiptext">attend_lecture: machine_learning:<br/>
+            16:00 to 16:50 = 0:50:00 (7.6 %)</span></div>
+    
+        <div class="activity activity-good activity-big" style="flex: 0.015175">
+        <span class="tooltiptext">goto: room:<br/>
+            16:50 to 17:00 = 0:10:00 (1.5 %)</span></div>
+    
+        <div class="activity activity-bad activity-big" style="flex: 0.030349">
+        <span class="tooltiptext">talk_to: friends:<br/>
+            17:00 to 17:20 = 0:20:00 (3.0 %)</span></div>
+    
+        <div class="activity activity-uncounted activity-big" style="flex: 0.007587">
+        <span class="tooltiptext">
+            17:20 to 17:25 = 0:05:00 (0.8 %)</span></div>
+    
+        <div class="activity activity-ok activity-big" style="flex: 0.022762">
+        <span class="tooltiptext">eat: snacks:<br/>
+            17:25 to 17:40 = 0:15:00 (2.3 %)</span></div>
+    
+        <div class="activity activity-uncounted activity-big" style="flex: 0.007587">
+        <span class="tooltiptext">
+            17:40 to 17:45 = 0:05:00 (0.8 %)</span></div>
+    
+        <div class="activity activity-good activity-big" style="flex: 0.182094">
+        <span class="tooltiptext">programming_contest: codeforces:<br/>
+            17:45 to 19:45 = 2:00:00 (18.2 %)</span></div>
+    
+        <div class="activity activity-ok activity-big" style="flex: 0.045524">
+        <span class="tooltiptext">eat: dinner:<br/>
+            19:45 to 20:15 = 0:30:00 (4.6 %)</span></div>
+    
+        <div class="activity activity-good activity-big" style="flex: 0.250379">
+        <span class="tooltiptext">study: algorithms:<br/>
+            20:15 to 23:00 = 2:45:00 (25.0 %)</span></div>
+    
+        <div class="activity activity-sleep activity-big" style="flex: 0.089530">
+        <span class="tooltiptext">sleep:<br/>
+            23:00 to 23:59 = 0:59:00 (9.0 %)</span></div>
+    
+        </div>
+    
+        <div class="ticks">
+            <div class="tick" style="flex: 0.000000">
+                <span class="tick-text">13</span></div>
+        
+            <div class="tick" style="flex: 0.182094">
+                <span class="tick-text">15</span></div>
+        
+            <div class="tick" style="flex: 0.182094">
+                <span class="tick-text">17</span></div>
+        
+            <div class="tick" style="flex: 0.182094">
+                <span class="tick-text">19</span></div>
+        
+            <div class="tick" style="flex: 0.182094">
+                <span class="tick-text">21</span></div>
+        
+            <div class="tick" style="flex: 0.182094">
+                <span class="tick-text">23</span></div>
+        
+        </div>
+    
+    </li>
+
+    </ol>
+</body>
+</html>
