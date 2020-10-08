@@ -2,6 +2,15 @@
 
 I log my life in fixed-format text files. The script `showmylog.py` helps me analyze them.
 
+I use a text editor to create an input file
+(see [example.mylog](https://github.com/sharmaeklavya2/showmylog/blob/master/example.mylog)).
+Then I run `showmylog.py` on the input file.
+It prints a summary of my activities on screen
+(see [output.txt](https://sharmaeklavya2.github.io/showmylog/output.txt) for example)
+and outputs an HTML report
+(see [report.html](https://sharmaeklavya2.github.io/showmylog/report.html) for example).
+The report contains a timeline-diagram where you can hover over intervals to see details.
+
 ### How logging helps
 
 I started logging all my activities a few years ago.
