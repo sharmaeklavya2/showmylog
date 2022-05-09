@@ -1,57 +1,56 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="color-scheme" content="dark light" />
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="dark light" />
 {% if refresh_time %}
-    <meta http-equiv="refresh" content="{{refresh_time}}">
+<meta http-equiv="refresh" content="{{refresh_time}}">
 {% endif %}
-    <title> mylog </title>
-    <style>
+<title> mylog </title>
+<style>
 {{style}}
-{%- for activity_type, color in activity_web_colors.items() %}
+{% for activity_type, color in activity_web_colors.items() %}
 .activity-{{activity_type}} {background-color: {{color}};}
-{%- endfor %}
-@media (prefers-color-scheme: dark) {
-{%- for activity_type, color in activity_web_dark_colors.items() %}
-.activity-{{activity_type}} {background-color: {{color}};}
-{%- endfor %}
-}
-    </style>
-</head>
-<body>
-    <h1> mylog </h1>
-    <ol>
-{% for day in days %}
-    <li>
-        <p> {{day.fpath}}:<br/>{{day.start_time}} to {{day.end_time}} = {{day.total_time}} </p>
-        <div class="timeline timeline-small">
-    {% for agg_line in day.agg_lines %}
-        <div class="activity activity-{{agg_line.type}} activity-small" style="flex: {{'{:.6f}'.format(agg_line.ratio)}}" tabindex="0">
-        <span class="tooltiptext">{{agg_line.type}}<br/>
-            {{agg_line.duration}} ({{'{:.1f}'.format(100 * agg_line.ratio)}} %)</span></div>
-    {% endfor %}
-        </div>
-        <div class="timeline timeline-big">
-    {% for line in day.lines %}
-        <div class="activity activity-{{line.type}} activity-big" style="flex: {{'{:.6f}'.format(line.ratio)}}" tabindex="0">
-        <span class="tooltiptext">{{line.label}}{% if line.label %}:<br/>{% endif %}
-            {{line.start_time}} to {{line.end_time}} = {{line.duration}} ({{'{:.1f}'.format(100 * line.ratio)}} %)</span></div>
-    {% endfor %}
-        </div>
-    {% if day.ticks.n %}
-        <div class="ticks">
-            <div class="tick" style="flex: {{'{:.6f}'.format(day.ticks.a_len)}}">
-                <span class="tick-text">{{day.ticks.a_label}}</span></div>
-        {% for i in range(1, day.ticks.n) %}
-            <div class="tick" style="flex: {{'{:.6f}'.format(day.ticks.d_len)}}">
-                <span class="tick-text">{{(day.ticks.a_label + i * day.ticks.d_label)}}</span></div>
-        {% endfor %}
-        </div>
-    {% endif %}
-    </li>
 {% endfor %}
-    </ol>
+@media (prefers-color-scheme: dark) {
+{% for activity_type, color in activity_web_dark_colors.items() %}
+.activity-{{activity_type}} {background-color: {{color}};}
+{% endfor %}
+}
+</style>
+</head>
+
+<body>
+<h1> mylog </h1>
+<ol>
+{% for day in days %}
+<li>
+    <p> {{day.fpath}}:<br/>{{day.start_time}} to {{day.end_time}} = {{day.total_time}} </p>
+    <div class="timeline timeline-small">
+{% for agg_line in day.agg_lines %}
+        <div class="activity activity-{{agg_line.type}} activity-small" style="flex: {{'{:.6f}'.format(agg_line.ratio)}}" tabindex="0">
+            <span class="tooltiptext">{{agg_line.type}}<br/>{{agg_line.duration}} ({{'{:.1f}'.format(100 * agg_line.ratio)}} %)</span></div>
+{% endfor %}
+    </div>
+    <div class="timeline timeline-big">
+{% for line in day.lines %}
+        <div class="activity activity-{{line.type}} activity-big" style="flex: {{'{:.6f}'.format(line.ratio)}}" tabindex="0">
+            <span class="tooltiptext">{{line.label}}{% if line.label %}:<br/>{% endif %}{{line.start_time}} to {{line.end_time}} = {{line.duration}} ({{'{:.1f}'.format(100 * line.ratio)}} %)</span></div>
+{% endfor %}
+    </div>
+{% if day.ticks.n %}
+    <div class="ticks">
+        <div class="tick" style="flex: {{'{:.6f}'.format(day.ticks.a_len)}}">
+            <span class="tick-text">{{day.ticks.a_label}}</span></div>
+{% for i in range(1, day.ticks.n) %}
+        <div class="tick" style="flex: {{'{:.6f}'.format(day.ticks.d_len)}}">
+            <span class="tick-text">{{(day.ticks.a_label + i * day.ticks.d_label)}}</span></div>
+{% endfor %}
+    </div>
+{% endif %}
+</li>
+{% endfor %}
+</ol>
 </body>
 </html>

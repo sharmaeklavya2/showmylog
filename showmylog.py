@@ -241,7 +241,7 @@ def table2strs(table: List[Tuple[str, List[str]]], pad: str = ' ', spad: str = '
                 lengths += [0] * (j + 1 - len(lengths))
             lengths[j] = max(lengths[j], len(x) + len(spad))
     return [(activity_type, sep.join([(x + spad).ljust(lengths[j], pad)
-        for j, x in enumerate(row)])) for (activity_type, row) in table]
+        for j, x in enumerate(row)]).rstrip()) for (activity_type, row) in table]
 
 
 def get_style() -> str:
@@ -451,7 +451,7 @@ def main() -> int:
             total_total_time, timedelta(minutes=5) * len(fpaths))
 
     with open(pjoin(CURDIR, 'report.html.jinja2')) as fp:
-        html_template = Template(fp.read())
+        html_template = Template(fp.read(), trim_blocks=True)
     report = html_template.render(report_context)
     with open(args.report_path, 'w') as fobj:
         fobj.write(report)
