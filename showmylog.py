@@ -286,12 +286,12 @@ def get_day_context(fpath: str, records: Sequence[Record], type_agg: SP2TDDict,
         'end_time': end_time.strftime('%H:%M'),
         'ticks': get_ticks(start_time, end_time),
         'agg_lines': [{
-            'duration': v,
+            'duration': pretty_str_timedelta_2(v),
             'ratio': v / total_time,
             'type': activity_names.get(k, 'unknown'),
             } for (activity_type, k), v in type_agg.items()],
         'lines': [{
-            'duration': r.duration,
+            'duration': pretty_str_timedelta_2(r.duration),
             'ratio': r.duration / total_time,
             'label': r.get_sublabel(),
             'start_time': r.start_time.strftime('%H:%M'),
@@ -314,6 +314,14 @@ def pretty_str_timedelta(td: timedelta, total_time: timedelta, total_days: int =
         td2 = td / total_days
         s += ' ({:01d}:{:02d} per day)'.format(td2.seconds // 3600, (td2.seconds // 60) % 60)
     return s
+
+
+def pretty_str_timedelta_2(td: timedelta) -> str:
+    if td.days != 0:
+        print_error("duration '{}' has days".format(timedelta))
+    h = td.seconds // 3600
+    m = (td.seconds // 60) % 60
+    return '{:d}:{:02d}'.format(h, m)
 
 
 def print_by_type_and_label(all_agg: SP2TDDict, type_agg: SP2TDDict, label_agg: SP2TDDict,
