@@ -41,9 +41,9 @@ activity_web_colors = {}
 activity_web_dark_colors = {}
 
 
-def t2dt(t: time) -> datetime:
-    """ Convert a time object into a datetime object with some fixed date """
-    return datetime.combine(date.min, t)
+def time_minus(a: time, b: time) -> datetime:
+    """difference between times a and b"""
+    return datetime.combine(date.min, a) - datetime.combine(date.min, b)
 
 
 def add_to_dict(dest: Dict[K, addableV], source: Mapping[K, addableV]) -> None:
@@ -108,7 +108,7 @@ class Record:
         self.activity_type = activity_type
         self.penalty = penalty
         if duration is None:
-            self.duration: timedelta = t2dt(end_time) - t2dt(start_time)
+            self.duration: timedelta = time_minus(end_time, start_time)
         else:
             self.duration = duration
         self.label = label
@@ -155,7 +155,7 @@ def parse_line(words: Sequence[str]) -> Record:
     penalty = parse_timedelta(penalty_str)
     duration = parse_timedelta(duration_str)
     sublabel = rest[0] if rest else ''
-    if t2dt(end_time) - t2dt(start_time) != duration:
+    if time_minus(end_time, start_time) != duration:
         print_error("'{}' has incorrect duration".format(' '.join(words)))
     return Record(start_time, end_time, activity_type, penalty, duration, label, sublabel, words)
 
@@ -193,7 +193,7 @@ def augment_records_with_current_time(records: MutableSequence[Record],
     last_record = records[-1]
     last_time = last_record.end_time
     now = now_ts.time()
-    diff = t2dt(now) - t2dt(last_record.start_time)
+    diff = time_minus(now, last_record.start_time)
     if now < last_time:
         return
     if last_record.activity_type == 'u' or (last_time == last_record.start_time):
@@ -201,7 +201,7 @@ def augment_records_with_current_time(records: MutableSequence[Record],
         last_record.duration = diff
     else:
         records.append(Record(last_time, now))
-        diff = t2dt(now) - t2dt(last_time)
+        diff = time_minus(now, last_time)
     if (stale_limit is not None and last_record.activity_type not in STALE_EXEMPT_TYPES and  # noqa
             diff > timedelta(minutes=stale_limit)):
         print_error("stale-limit reached for '{}'".format(str(last_record)))
@@ -261,8 +261,7 @@ class Ticks(typing.NamedTuple):
 
 
 def get_ticks(start_time: time, end_time: time) -> Ticks:
-    sdt = t2dt(start_time)
-    total_time = t2dt(end_time) - sdt
+    total_time = time_minus(end_time, start_time)
     start_n = start_time.hour + (0 if start_time == time(hour=start_time.hour) else 1)
     end_n = end_time.hour
 
@@ -272,14 +271,14 @@ def get_ticks(start_time: time, end_time: time) -> Ticks:
 
     return Ticks(n=(end_n - start_n) // scale_factor + 1,
         a_label=start_n, d_label=scale_factor,
-        a_len=(t2dt(time(hour=start_n)) - t2dt(start_time)) / total_time,
+        a_len=time_minus(time(hour=start_n), start_time) / total_time,
         d_len=timedelta(hours=1) / total_time * scale_factor,
         )
 
 
 def get_day_context(fpath: str, records: Sequence[Record], type_agg: SP2TDDict,
         start_time: time, end_time: time) -> Mapping[str, Any]:
-    total_time = t2dt(end_time) - t2dt(start_time)
+    total_time = time_minus(end_time, start_time)
     return {
         'fpath': fpath,
         'total_time': total_time,
@@ -419,7 +418,7 @@ def main() -> int:
 
         min_time = records[0].start_time
         max_time = records[-1].end_time
-        total_time = t2dt(max_time) - t2dt(min_time)
+        total_time = time_minus(max_time, min_time)
         total_total_time += total_time
         # reported_time = sum((r.duration for r in records), timedelta())
 
