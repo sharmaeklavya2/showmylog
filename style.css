@@ -61,10 +61,10 @@ body {
     top: 35px;
 }
 
-.activity:hover {
+.activity:hover, .activity:focus {
     opacity: 0.8;
 }
-.activity:hover .tooltiptext {
+.activity:hover .tooltiptext, .activity:focus .tooltiptext {
     visibility: visible;
 }
 
