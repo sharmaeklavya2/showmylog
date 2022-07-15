@@ -3,7 +3,7 @@
 : 15:50 16:00 -:-- 0:10 goto lecture_hall
 + 16:00 16:50 -:-- 0:50 attend_lecture machine_learning  # attend lecture at university
 + 16:50 17:00 -:-- 0:10 goto room
-- 17:00 17:20 -:-- 0:20 talk_to friends
+- 17:00 17:20 -:-- 0:20 youtube
 : 17:25 17:40 -:-- 0:15 eat snacks
 + 17:45 19:45 -:-- 2:00 programming_contest codeforces (virtual)
 : 19:45 20:15 -:-- 0:30 eat dinner
