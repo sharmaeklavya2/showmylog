@@ -4,7 +4,6 @@
 
 import argparse
 import sys
-import os
 import re
 from os.path import join as pjoin
 from os.path import realpath, dirname
@@ -20,9 +19,6 @@ TODAY = date.today()
 STALE_EXEMPT_TYPES = ['s', 'j']
 TERM_RESET_COLOR_CODE = '\033[0m'
 TERM_ERROR_COLOR_CODE = '\033[0;31m'  # red
-
-HOMEDIR = os.path.expanduser('~')
-DEFAULT_REPORT_PATH = pjoin(HOMEDIR, 'mylog', 'report.html')
 CURDIR = dirname(realpath(__file__))
 
 K = TypeVar('K')
@@ -401,9 +397,6 @@ def main() -> int:
         help="don't raise errors for missing or empty files")
     args = parser.parse_args()  # type: Any
 
-    if args.report_path is None:
-        args.report_path = DEFAULT_REPORT_PATH
-        os.makedirs(pjoin(HOMEDIR, 'mylog'), exist_ok=True)
     fpaths = []
     for x in args.paths:
         fpaths.append(arg_to_path(x, args.path_pattern))
@@ -414,13 +407,14 @@ def main() -> int:
     total_total_time = timedelta(0)
 
     init_activity_and_color_info()
-    report_context = {
-        'style': get_style(),
-        'refresh_time': args.refresh_time,
-        'activity_web_colors': activity_web_colors,
-        'activity_web_dark_colors': activity_web_dark_colors,
-        'days': [],
-    }  # type: Dict[str, Any]
+    if args.report_path is not None:
+        report_context = {
+            'style': get_style(),
+            'refresh_time': args.refresh_time,
+            'activity_web_colors': activity_web_colors,
+            'activity_web_dark_colors': activity_web_dark_colors,
+            'days': [],
+        }  # type: Dict[str, Any]
     for fpath in fpaths:
         try:
             records = parse_file(fpath)
@@ -456,19 +450,23 @@ def main() -> int:
             print_by_type_and_label(all_agg, type_agg, label_agg, args.sort, args.long,
                 1, total_time)
 
-        report_context['days'].append(get_day_context(
-            fpath, records, type_agg, min_time, max_time))
+        if args.report_path is not None:
+            report_context['days'].append(get_day_context(
+                fpath, records, type_agg, min_time, max_time))
 
     if len(fpaths) > 1:
         print('Summary:\n')
         print_by_type_and_label(all_aggs, type_aggs, label_aggs, args.sort, args.long, len(fpaths),
             total_total_time, timedelta(minutes=5) * len(fpaths))
 
-    with open(pjoin(CURDIR, 'report.html.jinja2')) as fp:
-        html_template = Template(fp.read(), trim_blocks=True)
-    report = html_template.render(report_context)
-    with open(args.report_path, 'w') as fobj:
-        fobj.write(report)
+    if args.report_path is not None:
+        with open(pjoin(CURDIR, 'report.html.jinja2')) as fp:
+            html_template = Template(fp.read(), trim_blocks=True)
+        report = html_template.render(report_context)
+        with open(args.report_path, 'w') as fobj:
+            fobj.write(report)
+        print('report written to {}'.format(args.report_path))
+
     print_all_errors()
     return 1 if len(errors) > 0 else 0
 
