@@ -5,6 +5,7 @@
 import argparse
 import sys
 import os
+import re
 from os.path import join as pjoin
 from os.path import realpath, dirname
 from datetime import date, time, timedelta, datetime
@@ -16,16 +17,12 @@ import json
 from jinja2 import Template
 
 TODAY = date.today()
-YESTERDAY = TODAY - timedelta(days=1)
 STALE_EXEMPT_TYPES = ['s', 'j']
 TERM_RESET_COLOR_CODE = '\033[0m'
 TERM_ERROR_COLOR_CODE = '\033[0;31m'  # red
 
 HOMEDIR = os.path.expanduser('~')
 DEFAULT_REPORT_PATH = pjoin(HOMEDIR, 'mylog', 'report.html')
-PATH_PATTERN = pjoin(HOMEDIR, 'mylog', '{}.mylog')
-TODAY_PATH = PATH_PATTERN.format(str(TODAY))
-YESTERDAY_PATH = PATH_PATTERN.format(str(YESTERDAY))
 CURDIR = dirname(realpath(__file__))
 
 K = TypeVar('K')
@@ -357,13 +354,37 @@ def print_by_type_and_label(all_agg: SP2TDDict, type_agg: SP2TDDict, label_agg: 
     print()
 
 
+def arg_to_path(x: str, path_pattern: Optional[str]) -> str:
+    date = None
+    if x == 'today':
+        date = str(TODAY)
+    elif x == 'yesterday':
+        date = str(TODAY - timedelta(days=1))
+    elif x.isnumeric():
+        date = str(TODAY - timedelta(days=int(x)))
+    elif re.fullmatch(r'\d{4}-\d{2}-\d{2}', x):
+        date = x
+
+    if date is None:
+        return x
+    else:
+        if path_pattern is None:
+            raise ValueError('missing --path-pattern for argument {}'.format(x))
+        else:
+            return path_pattern.replace('{}', date).replace('%s', date)
+
+
 def main() -> int:
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('paths', nargs='*', default=['today'],
-        help="""*.mylog files to show info about. Default is 'today'.
-            Each argument should either be 'today', 'yesterday', a number or path to a file.
+        help="""Files to show info about. Default is 'today'. Each argument should be
+            'today', 'yesterday', a number, a date (YYYY-MM-DD), or path to a file.
             A number k will be interpreted as a date k days before today.""")
+    parser.add_argument('--path-pattern',
+        help="""Pattern to use for converting dates to paths.
+        Should be a string with '%s' or '{}' as substring,
+        which will be replaced by the date in YYYY-MM-DD format.""")
     parser.add_argument('-r', '--report-path',
         help='report output path. Default is ~/mylog/report.html')
     parser.add_argument('-l', '--long', default=False, action='store_true',
@@ -385,14 +406,7 @@ def main() -> int:
         os.makedirs(pjoin(HOMEDIR, 'mylog'), exist_ok=True)
     fpaths = []
     for x in args.paths:
-        if x == 'today':
-            fpaths.append(TODAY_PATH)
-        elif x == 'yesterday':
-            fpaths.append(YESTERDAY_PATH)
-        elif x.isnumeric():
-            fpaths.append(PATH_PATTERN.format(str(TODAY - timedelta(days=int(x)))))
-        else:
-            fpaths.append(x)
+        fpaths.append(arg_to_path(x, args.path_pattern))
 
     all_aggs = {}  # type: SP2TDDict
     type_aggs = {}  # type: SP2TDDict
