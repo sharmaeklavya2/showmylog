@@ -34,7 +34,7 @@ activity_web_colors = {}
 activity_web_dark_colors = {}
 
 
-def time_minus(a: time, b: time) -> datetime:
+def time_minus(a: time, b: time) -> timedelta:
     """difference between times a and b"""
     return datetime.combine(date.min, a) - datetime.combine(date.min, b)
 
@@ -47,7 +47,7 @@ def add_to_dict(dest: Dict[K, addableV], source: Mapping[K, addableV]) -> None:
             dest[k] = v
 
 
-def init_activity_and_color_info():
+def init_activity_and_color_info() -> None:
     with open(pjoin(CURDIR, 'colors.json')) as fp:
         color_info = json.load(fp)
     with open(pjoin(CURDIR, 'activity_types.json')) as fp:

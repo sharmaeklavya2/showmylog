@@ -90,7 +90,7 @@ It replaces all `?` by `0` in times.
 This code is written for python 3.5 and above.
 It contains [PEP 484 type annotations](https://www.python.org/dev/peps/pep-0484/),
 which makes it possible to use [mypy](http://mypy-lang.org/) for static type-checking.
-`showmylog.py` passes the `--strict-optional` mypy test.
+`showmylog.py` passes the `--strict` mypy test.
 
 ### Usage tips
 
