@@ -1,6 +1,7 @@
 # ShowMyLog
 
-I log my life in fixed-format text files. The script `showmylog.py` helps me analyze them.
+I log all my daily activities in fixed-format text files.
+The script `showmylog.py` helps me analyze them.
 
 I use a text editor to create an input file
 (see [example.mylog](https://github.com/sharmaeklavya2/showmylog/blob/master/example.mylog)).
@@ -16,18 +17,18 @@ The report contains a timeline-diagram where you can hover over intervals to see
 I started logging all my activities a few years ago.
 This has these advantages:
 
-* I wanted to increase my productivity. As every good software developer knows, we must
-  <a href="https://en.wikipedia.org/wiki/Profiling_(computer_programming)">profile</a> before optimizing.
-  That is, I should know how much productive and non-productive work I do everyday
-  before I start making changes to my routine to optimize productive work.
+* I wanted to increase my productivity.
+  If I can find out how much productive and non-productive work I do everyday,
+  and how much time different activities take,
+  I can make changes to my routine accordingly to optimize productive work.
 
-* Maintaining a log has become a habit and now I'm constantly aware of what I'm doing.
+* Maintaining a log has become a habit and now I'm often constantly aware of what I'm doing.
   This has helped me become more productive.
 
 * I have a record of my past activities. If I can't recall what I did a few days ago,
   or I can't recall when I last did something, my log helps me find out.
 
-### Log file format
+### Log file format considerations
 
 Initially I used notebooks made of paper to do this, but I soon switched to text files.
 This was better since edits were less messy and I could `grep` those files.
