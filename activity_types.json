@@ -5,5 +5,6 @@
     "!": {"name": "warn", "color": "yellow"},
     ":": {"name": "ok", "color": "light-gray"},
     "u": {"name": "uncounted"},
-    "j": {"name": "job", "color": "dark-gray"}
+    "j": {"name": "job", "color": "dark-gray"},
+    "l": {"name": "l", "color": "magenta"}
 }

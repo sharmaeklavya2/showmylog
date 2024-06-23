@@ -34,7 +34,9 @@
         "term": "\u001b[0;34m"
     },
     "magenta": {
-        "term": "\u001b[0;35m"
+        "term": "\u001b[0;35m",
+        "web": "hsl(345, 100%, 80%)",
+        "web.dark": "hsl(330, 40%, 50%)"
     },
     "cyan": {
         "term": "\u001b[0;36m"
