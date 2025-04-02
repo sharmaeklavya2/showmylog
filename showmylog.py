@@ -192,7 +192,7 @@ def augment_records_with_current_time(records: MutableSequence[Record],
     last_time = last_record.end_time
     now = now_ts.time()
     diff = time_minus(now, last_record.start_time)
-    if now < last_time:
+    if last_time.fold == 1 or now < last_time:
         return
     if last_record.activity_type == 'u' or (last_time == last_record.start_time):
         last_record.end_time = now
@@ -316,7 +316,7 @@ def pretty_str_timedelta(td: timedelta, total_time: timedelta, total_days: int =
 
 def pretty_str_timedelta_2(td: timedelta) -> str:
     if td.days != 0:
-        print_error("duration '{}' has days".format(timedelta))
+        print_error("duration '{}' has days".format(td))
     h = td.seconds // 3600
     m = (td.seconds // 60) % 60
     return '{:d}:{:02d}'.format(h, m)
