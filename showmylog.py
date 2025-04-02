@@ -36,7 +36,8 @@ activity_web_dark_colors = {}
 
 def time_minus(a: time, b: time) -> timedelta:
     """difference between times a and b"""
-    return datetime.combine(date.min, a) - datetime.combine(date.min, b)
+    d = datetime.combine(date.min, a) - datetime.combine(date.min, b)
+    return d + timedelta(days=1) if a == time(fold=1) and a.fold == 1 else d
 
 
 def add_to_dict(dest: Dict[K, addableV], source: Mapping[K, addableV]) -> None:
@@ -128,8 +129,11 @@ class Record:
 # PARSE (read input files and simultaneously check for inconsistencies/errors in input)
 
 def parse_time(s: str) -> time:
-    hour_str, min_str = s.replace('?', '0').replace('-', '0').split(':')
-    return time(int(hour_str), int(min_str))
+    if s == '24:00':
+        return time(fold=1)
+    else:
+        hour_str, min_str = s.replace('?', '0').replace('-', '0').split(':')
+        return time(int(hour_str), int(min_str))
 
 
 def parse_timedelta(s: str) -> timedelta:
@@ -143,13 +147,14 @@ def parse_line(words: Sequence[str]) -> Record:
     activity_type, start_time_str, end_time_str, penalty_str, duration_str, label, *rest = words
     start_time = parse_time(start_time_str)
     end_time = parse_time(end_time_str)
-    if end_time == time(0):
+    if end_time == time(0) and end_time.fold == 0:
         end_time = start_time
     penalty = parse_timedelta(penalty_str)
     duration = parse_timedelta(duration_str)
     sublabel = rest[0] if rest else ''
-    if time_minus(end_time, start_time) != duration:
-        print_error("'{}' has incorrect duration".format(' '.join(words)))
+    calc_duration = time_minus(end_time, start_time)
+    if calc_duration != duration:
+        print_error("'{}' has incorrect duration: end - start = {}".format(' '.join(words), calc_duration))
     return Record(start_time, end_time, activity_type, penalty, duration, label, sublabel, words)
 
 
