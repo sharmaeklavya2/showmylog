@@ -261,7 +261,7 @@ class Ticks(typing.NamedTuple):
 def get_ticks(start_time: time, end_time: time) -> Ticks:
     total_time = time_minus(end_time, start_time)
     start_n = start_time.hour + (0 if start_time == time(hour=start_time.hour) else 1)
-    end_n = end_time.hour
+    end_n = 24 if end_time == time(fold=1) else end_time.hour
 
     if end_n < start_n:
         return Ticks(0, 0, 0, 0, 0)
