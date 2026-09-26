@@ -6,5 +6,6 @@
     ":": {"name": "ok", "color": "light-gray"},
     "u": {"name": "uncounted"},
     "j": {"name": "job", "color": "dark-gray"},
+    "i": {"name": "ignored", "color": "dark-gray"},
     "l": {"name": "l", "color": "magenta"}
 }
